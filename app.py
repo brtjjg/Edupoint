@@ -386,6 +386,7 @@ function notify(m,t){var n=document.getElementById('notif');n.className='notif n
 </body>
 </html>'''
 
+import os
 if __name__ == '__main__':
-    print(f"✅ EduPoint AI v10.0 | {len(P)} programmes | http://localhost:8000")
-    app.run(host='0.0.0.0', port=8000, debug=False)
+    port = int(os.environ.get('PORT', 8000))
+    app.run(host='0.0.0.0', port=port, debug=False)
