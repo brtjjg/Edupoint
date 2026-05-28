@@ -122,6 +122,75 @@ def ai():
     else: l,a,p = "BUILDING","🎯 Certificate/Diploma.",["Certificate","Diploma","Artisan"]
     return jsonify({"l":l,"a":a,"p":p})
 
+@app.route('/api/career-advisor', methods=['POST'])
+def career_advisor():
+    data = request.get_json()
+    cp = data.get('cp', 0)
+    interests = data.get('interests', [])  # e.g. ['Medicine', 'Technology']
+
+    # Career database
+    career_db = {
+        'Medicine': {
+            'path': 'Doctor → Specialist → Consultant',
+            'skills': 'Empathy, communication, problem-solving',
+            'salary': '150K-500K+',
+            'growth': 'Very High',
+            'advice': 'Start with MBChB, then specialize in surgery, pediatrics, etc.'
+        },
+        'Technology': {
+            'path': 'Developer → Senior Dev → Tech Lead / CTO',
+            'skills': 'Programming, logic, teamwork',
+            'salary': '80K-500K+',
+            'growth': 'Very High',
+            'advice': 'Computer Science or Software Engineering. Build a portfolio.'
+        },
+        'Engineering': {
+            'path': 'Engineer → Project Manager → Director',
+            'skills': 'Maths, analytical thinking, design',
+            'salary': '70K-350K',
+            'growth': 'High',
+            'advice': 'Civil, Electrical, Mechanical, or Mechatronic Engineering.'
+        },
+        'Business': {
+            'path': 'Analyst → Manager → Director / Entrepreneur',
+            'skills': 'Analytical, leadership, communication',
+            'salary': '50K-500K+',
+            'growth': 'High',
+            'advice': 'Commerce, Economics, Actuarial Science, or Business Management.'
+        },
+        'Education': {
+            'path': 'Teacher → Senior Teacher → Principal / Lecturer',
+            'skills': 'Patience, communication, organisation',
+            'salary': '35K-120K',
+            'growth': 'Stable',
+            'advice': 'Education (Science) or (Arts). Further studies for lecturing.'
+        },
+        'Arts': {
+            'path': 'Various roles in public service, media, NGOs',
+            'skills': 'Creativity, communication, writing',
+            'salary': '30K-150K',
+            'growth': 'Moderate',
+            'advice': 'Bachelor of Arts, combine with IT for better prospects.'
+        }
+    }
+
+    # Determine recommended careers based on interests or CP level
+    if interests:
+        rec_careers = [career_db.get(i) for i in interests if i in career_db]
+    else:
+        # Fallback based on CP
+        if cp >= 44: rec_careers = [career_db['Medicine'], career_db['Technology']]
+        elif cp >= 40: rec_careers = [career_db['Medicine'], career_db['Engineering']]
+        elif cp >= 35: rec_careers = [career_db['Technology'], career_db['Engineering']]
+        elif cp >= 30: rec_careers = [career_db['Business'], career_db['Education']]
+        elif cp >= 25: rec_careers = [career_db['Business'], career_db['Arts']]
+        else: rec_careers = [career_db['Arts']]
+
+    return jsonify({
+        'careers': rec_careers,
+        'tip': 'Choose a course that matches your passion. Check course cutoffs and your cluster points to increase placement chances.'
+    })
+
 H = '''<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -250,6 +319,22 @@ H = '''<!DOCTYPE html>
     <!-- AI RECOMMENDATIONS -->
     <div class="card"><h3>🤖 AI Recommendations</h3><div id="ai"><p style="text-align:center;color:var(--text3);padding:20px;">Calculate your points to get personalized recommendations</p></div></div>
     
+<!-- AI CAREER ADVISOR -->
+<div class="card" id="careerAdvisorSection" style="display:none;">
+    <h3>🧑‍💼 AI Career Advisor</h3>
+    <p style="color:var(--text2);font-size:0.85em;margin-bottom:10px;">
+        Select your interests to get personalised career guidance.
+    </p>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;" id="interestBtns">
+        <button class="sort-btn" onclick="selectInterest('Medicine')">🏥 Medicine</button>
+        <button class="sort-btn" onclick="selectInterest('Technology')">💻 Technology</button>
+        <button class="sort-btn" onclick="selectInterest('Engineering')">⚙️ Engineering</button>
+        <button class="sort-btn" onclick="selectInterest('Business')">💼 Business</button>
+        <button class="sort-btn" onclick="selectInterest('Education')">📚 Education</button>
+        <button class="sort-btn" onclick="selectInterest('Arts')">🎭 Arts</button>
+    </div>
+    <div id="careerResult"></div>
+</div>
     <!-- REFER A FRIEND -->
     <div class="refer-card" id="referCard" style="display:none;">
         <h4>👥 Invite Your Friends & Earn!</h4>
@@ -352,6 +437,46 @@ function showR(d){
     document.getElementById('results').innerHTML=h;
 }
 
+var selectedInterests = [];
+
+function selectInterest(interest) {
+    if (selectedInterests.includes(interest)) {
+        selectedInterests = selectedInterests.filter(i => i !== interest);
+    } else {
+        selectedInterests.push(interest);
+    }
+    // Highlight active buttons
+    var btns = document.querySelectorAll('#interestBtns .sort-btn');
+    btns.forEach(function(b) {
+        if (selectedInterests.includes(b.textContent.trim())) {
+            b.classList.add('active');
+        } else {
+            b.classList.remove('active');
+        }
+    });
+    // Fetch career advice
+    fetch('/api/career-advisor', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({cp: pts || 0, interests: selectedInterests})
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        var html = '';
+        data.careers.forEach(function(c) {
+            html += '<div class="ai-card" style="margin-top:10px;">' +
+                '<p><b>Career Path:</b> ' + c.path + '</p>' +
+                '<p><b>Skills Needed:</b> ' + c.skills + '</p>' +
+                '<p><b>Expected Salary:</b> KES ' + c.salary + '</p>' +
+                '<p><b>Growth:</b> ' + c.growth + '</p>' +
+                '<p><b>Advice:</b> ' + c.advice + '</p>' +
+            '</div>';
+        });
+        if (data.tip) html += '<p style="margin-top:10px;color:var(--cyan);">💡 ' + data.tip + '</p>';
+        document.getElementById('careerResult').innerHTML = html;
+    });
+}
+
 function showQ(d){
     document.getElementById('qSection').style.display='block';
     document.getElementById('totalPts').textContent=pts.toFixed(3);
@@ -359,6 +484,7 @@ function showQ(d){
     document.getElementById('cCount').textContent=st.cc;
     document.getElementById('nCount').textContent=st.nc;
     document.getElementById('sRate').textContent=st.r+'%';
+    document.getElementById('careerAdvisorSection').style.display = 'block';
     renderT(qd);
 }
 
