@@ -85,6 +85,16 @@ P = [
     {"n":"Bachelor of Laws (LLB)","u":"KENYATTA UNIVERSITY","c":42.000,"y":"4","s":"70K-400K","i":"⚖️"},
 ]
 
+# ---------- SCHOLARSHIPS DATA ----------
+SCHOLARSHIPS = [
+    {"name": "Equity Bank Wings to Fly", "amount": "Full tuition + stipend", "major": "Any", "min_gpa": 3.0, "income_req": "Low income", "deadline": "March 31", "link": "https://equitygroupfoundation.com"},
+    {"name": "Kenya Government (HELB) Undergraduate", "amount": "Up to KES 60,000/yr", "major": "Any", "min_gpa": 2.5, "income_req": "Any", "deadline": "Rolling", "link": "https://helb.co.ke"},
+    {"name": "Mastercard Foundation Scholars Program", "amount": "Full scholarship", "major": "STEM, Agriculture, Education", "min_gpa": 3.2, "income_req": "Low income", "deadline": "Dec 15", "link": "https://mastercardfdn.org"},
+    {"name": "DAAD Kenya", "amount": "KES 150K–300K", "major": "Engineering, CS, Agriculture", "min_gpa": 3.0, "income_req": "Any", "deadline": "May 30", "link": "https://daad-kenya.org"},
+    {"name": "KCB Foundation 2jiajiri", "amount": "KES 100,000", "major": "Technical", "min_gpa": 2.0, "income_req": "Youth 18-35", "deadline": "Ongoing", "link": "https://kcbgroup.com"},
+    {"name": "Zawadi Africa", "amount": "KES 200,000/yr", "major": "STEM, Business", "min_gpa": 3.5, "income_req": "Low income girls", "deadline": "Feb 28", "link": "https://zawadiafrica.org"},
+]
+
 @app.route('/')
 def home():
     return H
@@ -191,11 +201,33 @@ def career_advisor():
         'tip': 'Choose a course that matches your passion. Check course cutoffs and your cluster points to increase placement chances.'
     })
 
+@app.route('/api/scholarships', methods=['POST'])
+def scholarships():
+    data = request.get_json()
+    major = data.get('major', '').lower().strip()
+    gpa = float(data.get('gpa', 0))
+    
+    filtered = []
+    for s in SCHOLARSHIPS:
+        # Check GPA
+        if s["min_gpa"] > gpa:
+            continue
+        # Check major match (if major is specified)
+        if major:
+            major_ok = (major in s["major"].lower() or 
+                        s["major"].lower() == "any")
+            if not major_ok:
+                continue
+        filtered.append(s)
+    
+    # Sort by highest GPA requirement (most selective first)
+    filtered.sort(key=lambda x: x["min_gpa"], reverse=True)
+    return jsonify(filtered)
 H = '''<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=0.1">
-    <title>EduPoint AI v1.0</title>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=0.5">
+    <title>EduPoint AI v5.0</title>
     <style>
         :root{--bg:#0a0a14;--card:#12122a;--border:#1e1e3a;--cyan:#00e5ff;--purple:#b347ea;--green:#00ff88;--red:#ff4466;--yellow:#ffd700;--wa:#25d366;--text:#e0e0ff;--text2:#8888bb;--text3:#555588}
         *{margin:0;padding:0;box-sizing:border-box}
@@ -268,13 +300,13 @@ H = '''<!DOCTYPE html>
         <p class="welcome-sub">Know the right course to pursue with confidence</p>
         
         <div class="pay-box">
-            <p style="font-size:.8em;color:var(--text2);">M-PESA TILL NUMBER</p>
-            <div class="till-num">123456</div>
+            <p style="font-size:.5em;color:var(--text2);">click down below to unlock premium features</p>
+            <div class="till-num">IT IS WONDERFUL MOMENT TO HAVE YOU HERE</div>
             <div class="amount-text">KES 100</div>
         </div>
-        <p style="font-size:.8em;color:var(--text2);">Enter your M-PESA phone to receive STK Push</p>
-        <input type="tel" id="payPhone" placeholder="07XX XXX XXX" style="text-align:center;margin:10px 0;font-size:1em;">
-        <button class="btn btn-mpesa" onclick="pay()">📱 Send STK Push</button>
+        <p style="font-size:.8em;color:var(--text2);">ENTER YOUR M-PESA PHONE NUMBER</p>
+        <input type="tel" id="payPhone" placeholder="07XX XXX XXX/01XX XXX  XXX " style="text-align:center;margin:10px 0;font-size:1em;">
+        <button class="btn btn-mpesa" onclick="pay()">📱 PAY NOW</button>
         <div id="payStatus" style="margin-top:10px;font-size:.85em;"></div>
     </div>
 </div>
@@ -316,8 +348,6 @@ H = '''<!DOCTYPE html>
         <div class="overflow-x" id="qTable"></div>
     </div>
     
-    <!-- AI RECOMMENDATIONS -->
-    <div class="card"><h3>🤖 AI Recommendations</h3><div id="ai"><p style="text-align:center;color:var(--text3);padding:20px;">Calculate your points to get personalized recommendations</p></div></div>
     
 <!-- AI CAREER ADVISOR -->
 <div class="card" id="careerAdvisorSection" style="display:none;">
@@ -335,6 +365,19 @@ H = '''<!DOCTYPE html>
     </div>
     <div id="careerResult"></div>
 </div>
+
+<!-- SCHOLARSHIP FINDER -->
+<div class="card"> 
+    <h3>💰 Scholarship Finder</h3>
+    <p style="color:var(--text2); font-size:0.85em;">Find scholarships that match your GPA and field of study</p>
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px;">
+        <input type="text" id="scholarMajor" placeholder="Your intended major (e.g., Computer Science)" style="flex:2;">
+        <input type="number" id="scholarGpa" placeholder="Your GPA (0-4.0 or 0-12)" step="0.1" style="flex:1;">
+    </div>
+    <button class="btn btn-calc" onclick="searchScholarships()" style="background:linear-gradient(135deg, #ff8c00, #ff2e00);">🔍 Find Scholarships</button>
+    <div id="scholarResults" style="margin-top:15px;"></div>
+</div>
+
     <!-- REFER A FRIEND -->
     <div class="refer-card" id="referCard" style="display:none;">
         <h4>👥 Invite Your Friends & Earn!</h4>
@@ -365,9 +408,9 @@ H = '''<!DOCTYPE html>
     
     <!-- FOUNDER -->
     <div class="founder-card">
-        <div style="font-size:3em;">👨‍💻</div>
-        <h3 style="color:var(--cyan);margin:8px 0;">Founder & Developer</h3>
-        <h2 style="font-size:1.4em;">Mr. Nex</h2>
+        <div style="font-size:1em;">👨‍💻</div>
+        <h3 style="color:var(--cyan);margin:5px 0;">Founder & Developer</h3>
+        <h2 style="font-size:1.0em;">Mr. Nex</h2>
         <p style="color:var(--text2);">CEO & Lead Developer</p>
         <div class="contact-row">
             <a href="tel:0114812308" class="contact-btn" style="background:var(--card);border:1px solid var(--cyan);color:var(--cyan);">📞 Call</a>
@@ -401,7 +444,6 @@ function pay(){
         }, 800);
     }, 2000);
 }
-
 function build(){
     var h='';
     for(var i=0;i<7;i++){
@@ -486,12 +528,55 @@ function showQ(d){
     document.getElementById('sRate').textContent=st.r+'%';
     document.getElementById('careerAdvisorSection').style.display = 'block';
     renderT(qd);
+    document.getElementById('scholarshipCard').style.display = "block";
 }
 
 function renderT(cs){
     var h='<table><tr><th>#</th><th>Course</th><th>University</th><th>Cutoff</th><th>Gap</th><th>Status</th></tr>';
     for(var i=0;i<cs.length;i++){var c=cs[i],g=c.g;var sc=g>=0?'bg-green':(g>=-2?'bg-yellow':'bg-red');var st=g>=0?'✅ Qualified':(g>=-2?'⚠️ Close':'❌ Not');var color=g>=0?'var(--green)':(g>=-2?'var(--yellow)':'var(--red)');h+='<tr><td>'+(i+1)+'</td><td>'+c.i+' '+c.n+'</td><td>'+c.u+'</td><td>'+c.c.toFixed(3)+'</td><td style="color:'+color+';font-weight:700;">'+(g>=0?'+':'')+g.toFixed(1)+'</td><td><span class="badge '+sc+'">'+st+'</span></td></tr>';}
     h+='</table>';document.getElementById('qTable').innerHTML=h;
+}
+function searchScholarships() {
+    var major = document.getElementById('scholarMajor').value;
+    var gpa = parseFloat(document.getElementById('scholarGpa').value);
+    if (isNaN(gpa)) {
+        notify("Please enter a valid GPA (e.g., 3.2)", "error");
+        return;
+    }
+    var resultsDiv = document.getElementById('scholarResults');
+    resultsDiv.innerHTML = '<div class="spinner show"><div class="spinner-icon">🔄</div><p>Searching scholarships...</p></div>';
+    
+    fetch('/api/scholarships', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({major: major, gpa: gpa})
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+        if (data.length === 0) {
+            resultsDiv.innerHTML = '<div class="sec-yellow" style="text-align:center;">😞 No scholarships match your criteria. Try a lower GPA or broader major.</div>';
+            return;
+        }
+        var html = '<div style="margin-top:10px;"><p class="sec-green">✅ ' + data.length + ' scholarships found</p>';
+        html += '<div class="overflow-x"><table style="width:100%"><tr><th>Scholarship</th><th>Amount</th><th>Min GPA</th><th>Eligibility</th><th>Deadline</th><th>Link</th></tr>';
+        for (var i=0; i<data.length; i++) {
+            var s = data[i];
+            html += '<tr>' +
+                '<td><strong>' + s.name + '</strong></td>' +
+                '<td>' + s.amount + '</td>' +
+                '<td>' + s.min_gpa + '</td>' +
+                '<td>' + (s.income_req || s.major) + '</td>' +
+                '<td>' + s.deadline + '</td>' +
+                '<td><a href="' + s.link + '" target="_blank" style="color:var(--cyan);">Apply</a></td>' +
+                '</tr>';
+        }
+        html += '</table></div></div>';
+        resultsDiv.innerHTML = html;
+    })
+    .catch(function(err) {
+        resultsDiv.innerHTML = '<div class="sec-yellow">⚠️ Error loading scholarships. Please try again.</div>';
+        console.error(err);
+    });
 }
 
 function filterQ(){var q=document.getElementById('qSearch').value.toLowerCase().trim();if(!q){renderT(qd);return;}var f=[];for(var i=0;i<qd.length;i++){if(qd[i].n.toLowerCase().includes(q)||qd[i].u.toLowerCase().includes(q))f.push(qd[i]);}renderT(f);}
