@@ -1,5 +1,27 @@
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+*.so
+.Python
+env/
+venv/
 .env
-*.log
+.venv
+
+# Flask
+instance/
+.webassets-cache
+
+# IDE
+.vscode/
+.idea/
+
+# OS
 .DS_Store
+Thumbs.db
+
+# Logs
+*.log
+property*.db
+property*.py
+test_flask.py
