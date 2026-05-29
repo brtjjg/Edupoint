@@ -228,6 +228,15 @@ H = '''<!DOCTYPE html>
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=0.5">
     <title>EduPoint AI v5.0</title>
+    <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-EL5HEN57G3"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-EL5HEN57G3');
+</script>
     <style>
         :root{--bg:#0a0a14;--card:#12122a;--border:#1e1e3a;--cyan:#00e5ff;--purple:#b347ea;--green:#00ff88;--red:#ff4466;--yellow:#ffd700;--wa:#25d366;--text:#e0e0ff;--text2:#8888bb;--text3:#555588}
         *{margin:0;padding:0;box-sizing:border-box}
