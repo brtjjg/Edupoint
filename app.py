@@ -121,6 +121,88 @@ def calc():
     qc = len(q)
     return jsonify({'cp':cp,'ws':ws,'q':q,'cl':cl,'ac':ac,'st':{'qc':qc,'cc':len(cl),'nc':t-qc-len(cl),'t':t,'r':round((qc/t)*100,1)}})
 
+@app.route('/terms')
+def terms():
+    return '''
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Terms & Conditions - EduPoint AI</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background: #0a0a14;
+                color: #e0e0ff;
+                padding: 20px;
+                line-height: 1.6;
+            }
+            .container {
+                max-width: 800px;
+                margin: auto;
+                background: #12122a;
+                padding: 30px;
+                border-radius: 16px;
+                border: 1px solid #1e1e3a;
+            }
+            h1, h2 {
+                color: #00e5ff;
+            }
+            a {
+                color: #00ff88;
+                text-decoration: none;
+            }
+            a:hover {
+                text-decoration: underline;
+            }
+            .back-link {
+                display: inline-block;
+                margin-top: 20px;
+                padding: 10px 20px;
+                background: #00e5ff;
+                color: #000;
+                border-radius: 8px;
+                font-weight: bold;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Terms & Conditions</h1>
+            <p><strong>Last updated:</strong> May 29, 2026</p>
+            
+            <h2>1. Acceptance of Terms</h2>
+            <p>By accessing or using EduPoint AI ("the Service"), you agree to be bound by these Terms. If you disagree, please do not use the Service.</p>
+            
+            <h2>2. Description of Service</h2>
+            <p>EduPoint AI provides KCSE cluster points calculation, course recommendations, AI career advice, and scholarship information. The results are estimates and not official KUCCPS placement guarantees.</p>
+            
+            <h2>3. Payments & Refunds</h2>
+            <p>Access to premium features requires a one-time payment of KES 100 via M-PESA. All payments are non-refundable unless technical issues prevent access. In case of errors, contact us at <a href="mailto:academichelpdesk1@gmail.com">academichelpdesk1@gmail.com</a>.</p>
+            
+            <h2>4. User Responsibilities</h2>
+            <p>You agree to provide accurate information. You are responsible for maintaining the confidentiality of your M-PESA transactions.</p>
+            
+            <h2>5. Intellectual Property</h2>
+            <p>All content, logos, and code are owned by EduPoint AI. You may not reproduce or distribute without permission.</p>
+            
+            <h2>6. Limitation of Liability</h2>
+            <p>EduPoint AI is not liable for any decisions made based on our calculations or recommendations. Always verify with official KUCCPS sources.</p>
+            
+            <h2>7. Changes to Terms</h2>
+            <p>We may update these Terms. Continued use constitutes acceptance of the new Terms.</p>
+            
+            <h2>8. Contact Us</h2>
+            <p>Email: <a href="mailto:academichelpdesk1@gmail.com">academichelpdesk1@gmail.com</a><br>
+            WhatsApp: <a href="https://chat.whatsapp.com/CQB9ZfYe9B683p6Df35YCG" target="_blank">Join our WhatsApp Group</a></p>
+            
+            <a href="/" class="back-link">← Back to Home</a>
+        </div>
+    </body>
+    </html>
+    '''
+
 @app.route('/api/ai', methods=['POST'])
 def ai():
     cp = request.get_json().get('cp', 0)
@@ -355,6 +437,13 @@ H = '''<!DOCTYPE html>
         <button class="btn btn-mpesa" onclick="processPayment()">📱 Pay with M-PESA</button>
         <div id="payStatus" style="margin-top:10px;font-size:.85em;"></div>
     </div>
+</div>
+<div class="footer">
+    <p>© 2026 <b>EduPoint AI v10.0</b> • All Rights Reserved</p>
+    <p style="margin-top:8px;">
+        <a href="/terms" style="color:var(--cyan); text-decoration:none;">Terms & Conditions</a> | 
+        <a href="/privacy" style="color:var(--cyan); text-decoration:none;">Privacy Policy</a>
+    </p>
 </div>
 
 <!-- MAIN APP (full features, hidden until payment) -->
