@@ -515,6 +515,8 @@ H = '''<!DOCTYPE html>
 
 <div style="margin:15px 0; text-align:left;">
     <label>
+        <div style="margin:15px 0; text-align:left;">
+    <label>
         <input type="checkbox" id="agreeTerms" required> 
         I agree to the <a href="/terms" target="_blank" style="color:var(--cyan);">Terms & Conditions</a> and 
         <a href="/privacy" target="_blank" style="color:var(--cyan);">Privacy Policy</a>
@@ -698,24 +700,42 @@ function processPayment() {
     var phone = document.getElementById('payPhone').value;
     var agreeCheckbox = document.getElementById('agreeTerms');
     
-    if (!phone) {
-        notify('Enter your M-PESA phone number', 'error');
-        return;
-    }
-    if (!agreeCheckbox.checked) {
-        notify('Please agree to the Terms & Conditions and Privacy Policy', 'error');
+    // Debug: ensure elements exist
+    if (!agreeCheckbox) {
+        alert("Checkbox not found – check the HTML ID 'agreeTerms'.");
         return;
     }
     
+    if (!phone) {
+        alert("Please enter your M-PESA phone number.");
+        return;
+    }
+    
+    if (!agreeCheckbox.checked) {
+        alert("Please agree to the Terms & Conditions and Privacy Policy.");
+        return;
+    }
+    
+    // If we get here, proceed with simulated payment
     document.getElementById('payStatus').innerHTML = '⏳ Sending STK Push...';
+    
     setTimeout(function() {
         document.getElementById('payStatus').innerHTML = '<span style="color:var(--green);">✅ Payment successful! Redirecting...</span>';
+        
         setTimeout(function() {
+            // Hide payment page, show main app
             document.getElementById('paymentPage').style.display = 'none';
             document.getElementById('app').style.display = 'block';
-            build();
-            // Auto-calculate if preview grades exist
-            if (typeof previewGrades !== 'undefined' && Object.keys(previewGrades).length > 0) {
+            
+            // Build the main calculator fields
+            if (typeof build === 'function') {
+                build();
+            } else {
+                console.error("build() function missing");
+            }
+            
+            // If we had preview grades, auto-fill them
+            if (typeof previewGrades !== 'undefined' && previewGrades && Object.keys(previewGrades).length > 0) {
                 var mainSubj = document.querySelectorAll('#fields .ss');
                 var mainGrade = document.querySelectorAll('#fields .gs');
                 for (var i = 0; i < mainSubj.length; i++) {
@@ -724,23 +744,19 @@ function processPayment() {
                         mainGrade[i].value = previewGrades[subj];
                     }
                 }
-                setTimeout(function() { calc(); }, 300);
+                setTimeout(function() { 
+                    if (typeof calc === 'function') calc();
+                }, 300);
             }
-            notify('✅ Welcome! Your future starts now!', 'success');
+            
+            // Show welcome notification
+            if (typeof notify === 'function') {
+                notify('✅ Welcome! Your future starts now!', 'success');
+            } else {
+                alert("Welcome! Your future starts now.");
+            }
         }, 1500);
     }, 2000);
-}
-
-function build() {
-    var h = '';
-    for (var i = 0; i < 7; i++) {
-        h += '<div class="subj-row"><select class="ss"><option value="">Subject '+(i+1)+'</option>';
-        for (var j = 0; j < S.length; j++) { h += '<option value="'+S[j]+'">'+S[j]+'</option>'; }
-        h += '</select><select class="gs gs"><option value="">Grade</option>';
-        for (var k = 0; k < G.length; k++) { h += '<option value="'+G[k]+'">'+G[k]+'</option>'; }
-        h += '</select></div>';
-    }
-    document.getElementById('fields').innerHTML = h;
 }
 
 function calc() {
