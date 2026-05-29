@@ -507,15 +507,21 @@ H = '''<!DOCTYPE html>
             <li>✅ Save your results & view history</li>
         </ul>
         <div class="pay-box">
-            <p>M-PESA Till Number: <strong>123456</strong></p>
-            <p>Amount: <strong>KES 100</strong></p>
-        </div>
-        <p style="font-size:.8em;color:var(--text2);">Enter your M-PESA phone number to receive STK Push</p>
-        <input type="tel" id="payPhone" placeholder="07XX XXX XXX" style="margin:10px 0;">
-        <button class="btn btn-mpesa" onclick="processPayment()">📱 Pay with M-PESA</button>
-        <div id="payStatus" style="margin-top:10px;font-size:.85em;"></div>
-    </div>
+    <p>M-PESA Till Number: <strong>123456</strong></p>
+    <p>Amount: <strong>KES 100</strong></p>
 </div>
+<p style="font-size:.8em;color:var(--text2);">Enter your M-PESA phone number to receive STK Push</p>
+<input type="tel" id="payPhone" placeholder="07XX XXX XXX/01XX XXX XXX" style="margin:10px 0;">
+
+<div style="margin:15px 0; text-align:left;">
+    <label>
+        <input type="checkbox" id="agreeTerms" required> 
+        I agree to the <a href="/terms" target="_blank" style="color:var(--cyan);">Terms & Conditions</a> and 
+        <a href="/privacy" target="_blank" style="color:var(--cyan);">Privacy Policy</a>
+    </label>
+</div>
+
+<button class="btn btn-mpesa" onclick="processPayment()">📱 Pay with M-PESA</button>
 <div class="footer">
     <p>© 2026 <b>EduPoint AI v10.0</b> • All Rights Reserved</p>
     <p style="margin-top:8px;">
@@ -690,10 +696,17 @@ function showPaymentPage() {
 
 function processPayment() {
     var phone = document.getElementById('payPhone').value;
+    var agreeCheckbox = document.getElementById('agreeTerms');
+    
     if (!phone) {
         notify('Enter your M-PESA phone number', 'error');
         return;
     }
+    if (!agreeCheckbox.checked) {
+        notify('Please agree to the Terms & Conditions and Privacy Policy', 'error');
+        return;
+    }
+    
     document.getElementById('payStatus').innerHTML = '⏳ Sending STK Push...';
     setTimeout(function() {
         document.getElementById('payStatus').innerHTML = '<span style="color:var(--green);">✅ Payment successful! Redirecting...</span>';
@@ -701,17 +714,18 @@ function processPayment() {
             document.getElementById('paymentPage').style.display = 'none';
             document.getElementById('app').style.display = 'block';
             build();
-            // Restore preview grades into main form
-            var mainSubj = document.querySelectorAll('#fields .ss');
-            var mainGrade = document.querySelectorAll('#fields .gs');
-            for (var i = 0; i < mainSubj.length; i++) {
-                var subj = mainSubj[i].value;
-                if (previewGrades[subj]) {
-                    mainGrade[i].value = previewGrades[subj];
+            // Auto-calculate if preview grades exist
+            if (typeof previewGrades !== 'undefined' && Object.keys(previewGrades).length > 0) {
+                var mainSubj = document.querySelectorAll('#fields .ss');
+                var mainGrade = document.querySelectorAll('#fields .gs');
+                for (var i = 0; i < mainSubj.length; i++) {
+                    var subj = mainSubj[i].value;
+                    if (previewGrades[subj]) {
+                        mainGrade[i].value = previewGrades[subj];
+                    }
                 }
+                setTimeout(function() { calc(); }, 300);
             }
-            // Auto-calculate after short delay
-            setTimeout(function() { calc(); }, 300);
             notify('✅ Welcome! Your future starts now!', 'success');
         }, 1500);
     }, 2000);
