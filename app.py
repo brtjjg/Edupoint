@@ -5,7 +5,8 @@ CP = (Ws / 84) × 48
 Welcome Message | STK Push | No Formula Display | Referrals | Follow Us
 """
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
+import json, os
 import json
 import os
 
@@ -95,6 +96,168 @@ SCHOLARSHIPS = [
     {"name": "Zawadi Africa", "amount": "KES 200,000/yr", "major": "STEM, Business", "min_gpa": 3.5, "income_req": "Low income girls", "deadline": "Feb 28", "link": "https://zawadiafrica.org"},
 ]
 
+CHATBOT_QA = [
+    # Cluster points calculation
+    {"keywords": ["calculate cluster points", "how cluster points", "cluster points formula", "weighted cluster"], 
+     "answer": "Cluster points = (sum of your best 7 subject points / 84) × 48. Grade points: A=12, A-=11, B+=10, B=9, B-=8, C+=7, C=6, C-=5, D+=4, D=3, D-=2, E=1."},
+    
+    # Nursing with B-
+    {"keywords": ["nursing b-", "can i do nursing", "nursing requirements"], 
+     "answer": "Minimum cluster points for Nursing: UoN 43.676, Maseno 42.529, Moi 42.390, Egerton 42.166, Kisii 42.080. A B- (8 points) can qualify if your overall cluster meets the cutoff."},
+    
+    # Computer Science cutoff
+    {"keywords": ["computer science cutoff", "cs cutoff", "computer science points"], 
+     "answer": "Computer Science cutoffs: UoN 44.825, JKUAT 44.101, Kenyatta 43.497, Multimedia 41.039, Dedan Kimathi 39.746, Maseno 38.155, Masinde Muliro 36.480."},
+    
+    # Best university for Engineering
+    {"keywords": ["best university engineering", "engineering university kenya"], 
+     "answer": "Top engineering universities: University of Nairobi, JKUAT, Kenyatta University, Moi University. UoN and JKUAT have the highest cutoffs."},
+    
+    # Revise KUCCPS application
+    {"keywords": ["revise kuccps application", "change kuccps", "edit kuccps"], 
+     "answer": "Yes, during the revision period (usually 2-3 weeks after results). You can log into the KUCCPS student portal and change your course/university choices. The exact dates are announced on the KUCCPS website."},
+    
+    # Missed deadlines
+    {"keywords": ["missed kuccps deadline", "late application"], 
+     "answer": "If you miss the deadline, you may not be placed. However, KUCCPS sometimes opens a second revision window or you can apply for 'inter-institution transfer' later. Contact KUCCPS directly for appeals."},
+    
+    # Marketable courses
+    {"keywords": ["marketable courses kenya", "best courses for jobs"], 
+     "answer": "Highly marketable courses: Medicine, Computer Science, Software Engineering, Nursing, Actuarial Science, Civil/Electrical/Mechanical Engineering, Pharmacy, and IT. These have strong job prospects in Kenya and abroad."},
+    
+    # Transfer between universities
+    {"keywords": ["transfer university kuccps", "inter-institution transfer"], 
+     "answer": "Yes, inter‑institution transfer is possible. You must apply through your current university's registrar after one academic year, subject to vacancies and meeting the target university's requirements."},
+    
+    # Medicine requirements
+    {"keywords": ["medicine requirements", "mbchb requirements", "medicine subjects"], 
+     "answer": "Medicine (MBChB) requires strong grades in Biology, Chemistry, and either Physics or Mathematics. Minimum cutoffs: UoN 45.584, Kenyatta 45.433, Moi 45.087, JKUAT 45.048. You need an A or A- in most sciences."},
+    
+    # Subject combination for Law
+    {"keywords": ["law subjects", "requirements for law", "llb requirements"], 
+     "answer": "Law (LLB) requires English (minimum B), and any other two subjects from Group 2 or 3. No specific science required. Cutoffs: UoN 42.500, Kenyatta 42.000."},
+    
+    # C+ mean grade
+    {"keywords": ["c+ join university", "c+ mean grade"], 
+     "answer": "A mean grade of C+ is the minimum for university admission in Kenya under the new system. However, competitive courses require much higher cluster points. You can also consider diploma or TVET courses."},
+    
+    # TVET courses
+    {"keywords": ["tvet courses kuccps", "diploma through kuccps"], 
+     "answer": "Yes, KUCCPS places students into TVET (Technical and Vocational Education and Training) institutes for diploma and certificate courses. Popular TVET options: ICT, Engineering, Hospitality, and Business."},
+    
+    # HELB application
+    {"keywords": ["helb after kuccps", "apply for helb", "helb requirements"], 
+     "answer": "After KUCCPS placement, apply for HELB (Higher Education Loans Board) online at helb.co.ke. You need your admission letter, national ID, and parents' details. Applications open after placement announcements."},
+    
+    # Software Engineering universities
+    {"keywords": ["software engineering universities", "software engineering kenya"], 
+     "answer": "Software Engineering is offered at Multimedia University (cutoff 41.368), JKUAT, and some private universities. Many students also do Computer Science and later specialize."},
+    
+    # CS vs IT
+    {"keywords": ["difference between computer science and it", "cs vs it"], 
+     "answer": "Computer Science focuses on theory, algorithms, programming, and software development. IT focuses on networks, databases, system administration, and user support. Both are marketable; choose CS if you like coding, IT if you prefer infrastructure."},
+    
+    # High employment courses
+    {"keywords": ["highest employment courses", "courses with jobs"], 
+     "answer": "Medicine, Pharmacy, Nursing, Computer Science, Civil Engineering, and Education (Science) have consistently high employment rates in Kenya. Actuarial Science also pays well but is competitive."},
+    
+    # Study abroad after KUCCPS
+    {"keywords": ["study abroad after kuccps", "study overseas"], 
+     "answer": "Yes, after completing first year, you can apply for transfer to a foreign university. Credits may be transferred. Also, some universities have exchange programmes. Contact your university's international office."},
+    
+    # Inter-institution transfer details
+    {"keywords": ["inter institution transfer", "how to transfer university"], 
+     "answer": "Steps: 1) Complete at least one academic year. 2) Get a release letter from your current university. 3) Apply to the target university. 4) KUCCPS approval. Not all courses/universities accept transfers."},
+    
+    # B plain courses
+    {"keywords": ["b plain courses", "courses for b plain"], 
+     "answer": "With B plain (about 9 points), you can aim for: Education (Science/Arts), Bachelor of Commerce, Actuarial Science (JKUAT/Kenyatta), IT, and some diploma programmes. Check cluster cutoffs for each."},
+    
+    # Pilot training requirements
+    {"keywords": ["pilot training kenya", "pilot requirements"], 
+     "answer": "Pilot training is not under KUCCPS. You need to apply directly to aviation schools (e.g., East African School of Aviation, 43 Air School). Requirements: C+ in KCSE with good grades in Maths, Physics, and English."},
+    
+    # Admission chances
+    {"keywords": ["admission chances", "will i get admitted", "chances of placement"], 
+     "answer": "Use the calculator above! Enter your 7 subjects and grades, click 'Calculate My Cluster Points'. The tool will show courses you qualify for (green), close matches (yellow), and not qualified (red). Your chances are high for green courses."},
+    
+    # Private universities under KUCCPS
+    {"keywords": ["private universities kuccps", "private university list"], 
+     "answer": "KUCCPS places students into some private universities, including: Strathmore, USIU, Daystar, Catholic University, Africa Nazarene, and others. Government sponsorship may be partial."},
+    
+    # Minimum grade for Education
+    {"keywords": ["education minimum grade", "teaching courses requirements"], 
+     "answer": "Education (Arts) cutoffs: Kenyatta 33.556, UoN 32.421, Egerton 32.306. Education (Science) cutoffs: Kenyatta 37.208, UoN 36.127. You need at least a C+ and cluster points above these."},
+    
+    # Change course after admission
+    {"keywords": ["change course after admission", "change course kuccps"], 
+     "answer": "You can apply for course change through your university's registrar, usually after first semester. It depends on availability and meeting the new course's minimum requirements. Not always guaranteed."},
+    
+    # Easiest engineering course
+    {"keywords": ["easiest engineering", "lowest engineering cutoff"], 
+     "answer": "Among engineering courses, Marine Engineering (JKUAT 35.669) and Mechanical Engineering (UoN 41.835, JKUAT 41.450) have relatively lower cutoffs. Civil/Electrical are higher."},
+    
+    # Download admission letter
+    {"keywords": ["download admission letter", "kuccps admission letter"], 
+     "answer": "After KUCCPS placement, log into the KUCCPS student portal (students.kuccps.net). Go to 'My Placement' and click 'Download Admission Letter'. You'll need to print it for university registration."},
+    
+    # Weighted cluster subjects
+    {"keywords": ["weighted cluster subjects", "subject weighting"], 
+     "answer": "Some courses weight certain subjects more (e.g., Medicine weights Biology, Chemistry, Physics/Mathematics). The system uses your best 7 subjects, but some courses require specific subjects. Always check individual course requirements."},
+    
+    # Courses without Mathematics
+    {"keywords": ["courses no mathematics", "without maths"], 
+     "answer": "Courses that don't require Math: Law, Journalism, Communication, Music, Art, History, Social Work, and many arts/humanities. However, some may require English or a language."},
+    
+    # Best technology courses
+    {"keywords": ["best technology courses kenya", "tech courses"], 
+     "answer": "Top technology courses: Computer Science (CS), Software Engineering, Information Technology (IT), Cybersecurity, Data Science, and Artificial Intelligence. CS and SE have the highest demand and salaries."},
+    
+    # Courses for coding lovers
+    {"keywords": ["courses for coding", "love coding"], 
+     "answer": "If you love coding, choose: Software Engineering (Multimedia 41.368), Computer Science (UoN, JKUAT, Kenyatta), or IT (JKUAT 39.851). These focus heavily on programming, algorithms, and system design."},
+    
+    # Compare JKUAT vs KU for CS
+    {"keywords": ["jkuat vs ku computer science", "compare jkuat and ku"], 
+     "answer": "JKUAT CS cutoff 44.101, KU CS 43.497. JKUAT is more engineering‑oriented, KU has a stronger theoretical base. Both are excellent. JKUAT is located in Juja (quieter), KU is in Kikuyu (near Nairobi). Job prospects are similar."},
+    
+    # Lowest cutoff universities
+    {"keywords": ["lowest cutoff universities", "easy to get in"], 
+     "answer": "Some universities with lower cutoffs: Masinde Muliro (CS 36.48), Kisii University (Pharmacy 43.111, Nursing 42.08), Maseno (IT 31.702), JKUAT (Marine Engineering 35.669). Consider these as backup choices."},
+    
+    # Architecture qualification
+    {"keywords": ["architecture requirements", "architecture cutoff"], 
+     "answer": "Architecture cutoffs: UoN 42.990. Requires Mathematics, Physics, and Art/Geography. Good drawing skills are an advantage. It's a highly competitive course."},
+    
+    # Mechatronics careers
+    {"keywords": ["mechatronics careers", "mechatronics jobs"], 
+     "answer": "Mechatronics Engineering (JKUAT cutoff 43.232) leads to careers in robotics, automation, automotive, manufacturing, and AI hardware. Work as an automation engineer, control systems engineer, or R&D specialist."},
+    
+    # Government sponsored courses
+    {"keywords": ["fully government sponsored", "government sponsorship"], 
+     "answer": "Most undergraduate courses at public universities are government‑sponsored (usually 80-90% of fees covered). Private universities have limited government sponsorship. Check your placement letter for 'Government Sponsored' status."},
+    
+    # Most competitive courses
+    {"keywords": ["most competitive courses kenya", "hardest to get into"], 
+     "answer": "Most competitive: Medicine (MBChB), Dental Surgery, Pharmacy, Law (LLB), Computer Science (UoN), Actuarial Science (UoN), and Engineering at UoN. They have the highest cluster point cutoffs."},
+    
+    # Universities offering scholarships
+    {"keywords": ["universities with scholarships", "scholarship universities"], 
+     "answer": "Many universities have scholarships. Use the Scholarship Finder tool above (enter your GPA and intended major). Also check equitygroupfoundation.com, mastercardfdn.org, and helb.co.ke for loans."},
+    
+    # Diploma through KUCCPS
+    {"keywords": ["diploma kuccps", "apply for diploma"], 
+     "answer": "Yes, KUCCPS handles placement for diploma courses (TVET). You can select diploma programmes in the same portal. Minimum grade is C- for most diplomas."},
+    
+    # Backup courses
+    {"keywords": ["backup courses", "what to choose as backup"], 
+     "answer": "Choose backup courses with cutoffs 2-5 points lower than your cluster. Examples: Education (Arts), Bachelor of Commerce (Kisii), IT (Maseno), Agriculture (JKUAT). The tool above shows 'Close Matches' – those are good backups."},
+    
+    # Default fallback
+    {"keywords": ["default"], 
+     "answer": "I'm not sure about that. Try asking about cluster points calculation, specific course cutoffs, KUCCPS procedures, or use the tools above (Calculator, Scholarship Finder, AI Career Advisor). You can also email academichelpdesk1@gmail.com for detailed help."}
+]
+
 @app.route('/')
 def home():
     return H
@@ -164,6 +327,24 @@ def terms():
                 color: #000;
                 border-radius: 8px;
                 font-weight: bold;
+           .chat-message {
+    margin-bottom: 10px;
+    padding: 8px 12px;
+    border-radius: 18px;
+    max-width: 85%;
+    word-wrap: break-word;
+}
+.user-message {
+    background: linear-gradient(135deg, var(--cyan), var(--purple));
+    color: #000;
+    margin-left: auto;
+    text-align: right;
+}
+.bot-message {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+}
             }
         </style>
     </head>
@@ -384,6 +565,35 @@ def scholarships():
     filtered.sort(key=lambda x: x["min_gpa"], reverse=True)
     return jsonify(filtered)
 
+@app.route('/api/chatbot', methods=['POST'])
+def chatbot():
+    data = request.get_json()
+    user_message = data.get('message', '').lower()
+    
+    best_match = None
+    best_score = 0
+    
+    for qa in CHATBOT_QA:
+        if "keywords" not in qa:
+            continue
+        score = sum(1 for kw in qa["keywords"] if kw in user_message)
+        if score > best_score:
+            best_score = score
+            best_match = qa
+    
+    if best_match and best_score > 0:
+        answer = best_match["answer"]
+    else:
+        # fallback to default
+        for qa in CHATBOT_QA:
+            if qa.get("keywords") == ["default"]:
+                answer = qa["answer"]
+                break
+        else:
+            answer = "I'm still learning. Please ask about cluster points, course cutoffs, scholarships, or use the calculator above."
+    
+    return jsonify({"response": answer})
+
 H = '''<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -601,6 +811,25 @@ H = '''<!DOCTYPE html>
         <p style="font-size:.7em;color:var(--text3);margin-top:8px;">Your friends must pay KES 100 for you to earn KES 20</p>
     </div>
     
+   <!-- CHATBOT CARD -->
+<div class="card">
+    <h3>💬 Ask EduBot (KUCCPS Assistant)</h3>
+    <div id="chatMessages" style="height: 300px; overflow-y: auto; border: 1px solid var(--border); border-radius: 12px; padding: 10px; margin-bottom: 10px; background: rgba(0,0,0,0.2);">
+        <div class="chat-message bot-message">👋 Hi! I'm EduBot. Ask me anything about KUCCPS – courses, cutoffs, requirements, transfers, or scholarships. Type a question or tap a quick button below.</div>
+    </div>
+    <div style="margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 5px;">
+        <button class="sort-btn" onclick="quickQuestion('How are KUCCPS cluster points calculated?')">📐 Cluster Points</button>
+        <button class="sort-btn" onclick="quickQuestion('Which courses can I qualify for with my grades?')">🎓 My Courses</button>
+        <button class="sort-btn" onclick="quickQuestion('What is the cutoff for Computer Science?')">💻 CS Cutoff</button>
+        <button class="sort-btn" onclick="quickQuestion('Can I do Nursing with a B-?')">🩺 Nursing B-</button>
+        <button class="sort-btn" onclick="quickQuestion('Which courses are marketable in Kenya?')">💼 Marketable</button>
+        <button class="sort-btn" onclick="quickQuestion('How do I apply for HELB?')">💰 HELB</button>
+    </div>
+    <div style="display: flex; gap: 10px;">
+        <input type="text" id="chatInput" placeholder="Type your question here..." style="flex: 1;" onkeypress="if(event.key === 'Enter') sendChatMessage();">
+        <button class="btn btn-calc" onclick="sendChatMessage()" style="width: auto; padding: 0 20px; margin: 0;">Send</button>
+    </div>
+</div>
     <!-- FOLLOW US -->
     <div class="card" style="text-align:center;">
         <h3>📢 Follow Us For More Information</h3>
@@ -887,6 +1116,58 @@ function searchScholarships() {
 function copyRef() {
     navigator.clipboard.writeText('https://edupoint.app/ref=SHARE');
     notify('📋 Referral link copied! Share with friends.', 'success');
+}
+
+// Chatbot functions
+function sendChatMessage() {
+    let input = document.getElementById('chatInput');
+    let message = input.value.trim();
+    if (!message) return;
+    
+    let chatDiv = document.getElementById('chatMessages');
+    // User message
+    let userDiv = document.createElement('div');
+    userDiv.className = 'chat-message user-message';
+    userDiv.innerText = message;
+    chatDiv.appendChild(userDiv);
+    input.value = '';
+    chatDiv.scrollTop = chatDiv.scrollHeight;
+    
+    // Typing indicator
+    let typing = document.createElement('div');
+    typing.className = 'chat-message bot-message';
+    typing.innerText = 'EduBot is thinking...';
+    typing.id = 'typingIndicator';
+    chatDiv.appendChild(typing);
+    chatDiv.scrollTop = chatDiv.scrollHeight;
+    
+    fetch('/api/chatbot', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({message: message})
+    })
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById('typingIndicator')?.remove();
+        let botDiv = document.createElement('div');
+        botDiv.className = 'chat-message bot-message';
+        botDiv.innerText = data.response;
+        chatDiv.appendChild(botDiv);
+        chatDiv.scrollTop = chatDiv.scrollHeight;
+    })
+    .catch(err => {
+        document.getElementById('typingIndicator')?.remove();
+        let errDiv = document.createElement('div');
+        errDiv.className = 'chat-message bot-message';
+        errDiv.innerText = "Sorry, I'm having trouble. Please try again.";
+        chatDiv.appendChild(errDiv);
+        chatDiv.scrollTop = chatDiv.scrollHeight;
+    });
+}
+
+function quickQuestion(question) {
+    document.getElementById('chatInput').value = question;
+    sendChatMessage();
 }
 
 function notify(m, t) {
