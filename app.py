@@ -200,8 +200,86 @@ def terms():
             <a href="/" class="back-link">← Back to Home</a>
         </div>
     </body>
+    </html
+    '''
+@app.route('/privacy')
+def privacy():
+    return '''
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Privacy Policy - EduPoint AI</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background: #0a0a14;
+                color: #e0e0ff;
+                padding: 20px;
+                line-height: 1.6;
+            }
+            .container {
+                max-width: 800px;
+                margin: auto;
+                background: #12122a;
+                padding: 30px;
+                border-radius: 16px;
+                border: 1px solid #1e1e3a;
+            }
+            h1, h2 {
+                color: #00e5ff;
+            }
+            a {
+                color: #00ff88;
+                text-decoration: none;
+            }
+            .back-link {
+                display: inline-block;
+                margin-top: 20px;
+                padding: 10px 20px;
+                background: #00e5ff;
+                color: #000;
+                border-radius: 8px;
+                font-weight: bold;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Privacy Policy</h1>
+            <p><strong>Last updated:</strong> May 29, 2026</p>
+            
+            <h2>1. Information We Collect</h2>
+            <p>We collect the KCSE subjects and grades you enter, your M-PESA phone number (only for payment processing), and any information you voluntarily provide (e.g., email, interests). We also collect anonymous usage data via Google Analytics.</p>
+            
+            <h2>2. How We Use Your Information</h2>
+            <p>Your grades are used solely to calculate cluster points and recommend courses. Phone numbers are used only to send M-PESA STK push notifications (if you choose to pay). We do not sell or share your personal data with third parties.</p>
+            
+            <h2>3. Data Storage & Security</h2>
+            <p>We do not permanently store your grades or results unless you create an account (future feature). M-PESA transactions are processed through Safaricom's API; we do not store your payment details. We take reasonable measures to protect your data.</p>
+            
+            <h2>4. Cookies & Tracking</h2>
+            <p>We use Google Analytics to understand how visitors use our site. Google may set cookies. You can disable cookies in your browser settings.</p>
+            
+            <h2>5. Third-Party Links</h2>
+            <p>Our site links to external websites (scholarships, WhatsApp, social media). We are not responsible for their privacy practices.</p>
+            
+            <h2>6. Your Rights</h2>
+            <p>You may request deletion of any personal data we hold by contacting us below.</p>
+            
+            <h2>7. Changes to This Policy</h2>
+            <p>We may update this policy. Continued use constitutes acceptance.</p>
+            
+            <h2>8. Contact Us</h2>
+            <p>Email: <a href="mailto:academichelpdesk1@gmail.com">academichelpdesk1@gmail.com</a></p>
+            
+            <a href="/" class="back-link">← Back to Home</a>
+        </div>
+    </body>
     </html>
     '''
+
 
 @app.route('/api/ai', methods=['POST'])
 def ai():
@@ -445,7 +523,6 @@ H = '''<!DOCTYPE html>
         <a href="/privacy" style="color:var(--cyan); text-decoration:none;">Privacy Policy</a>
     </p>
 </div>
-
 <!-- MAIN APP (full features, hidden until payment) -->
 <div class="container" id="app" style="display:none;">
     <div class="header">
