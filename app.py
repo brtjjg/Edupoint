@@ -223,20 +223,20 @@ def scholarships():
     # Sort by highest GPA requirement (most selective first)
     filtered.sort(key=lambda x: x["min_gpa"], reverse=True)
     return jsonify(filtered)
+
 H = '''<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=0.5">
-    <title>EduPoint AI v5.0</title>
+    <title>EduPoint AI v0.5</title>
     <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-EL5HEN57G3"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-EL5HEN57G3');
-</script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EL5HEN57G3"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-EL5HEN57G3');
+    </script>
     <style>
         :root{--bg:#0a0a14;--card:#12122a;--border:#1e1e3a;--cyan:#00e5ff;--purple:#b347ea;--green:#00ff88;--red:#ff4466;--yellow:#ffd700;--wa:#25d366;--text:#e0e0ff;--text2:#8888bb;--text3:#555588}
         *{margin:0;padding:0;box-sizing:border-box}
@@ -295,32 +295,69 @@ H = '''<!DOCTYPE html>
         .welcome-sub{font-size:0.9em;color:var(--text2);margin:5px 0 15px 0}
         .refer-card{background:rgba(0,255,136,.05);border:2px solid var(--green);border-radius:14px;padding:15px;text-align:center;margin:10px 0}
         .refer-card h4{color:var(--green);margin-bottom:8px}
-        .refer-bonus{font-size:1.5em;font-weight:900;color:var(--yellow);}
+        .refer-bonus{font-size:1.5em;font-weight:900;color:var(--yellow)}
+        .trust-badge{display:inline-block;background:rgba(0,255,136,.1);border-radius:20px;padding:5px 12px;margin:5px;font-size:.75em;color:var(--green)}
+        .sort-btn{background:rgba(0,229,255,.1);border:1px solid var(--cyan);border-radius:20px;padding:6px 12px;cursor:pointer;color:var(--cyan);margin:4px;transition:0.3s}
+        .sort-btn:hover{background:var(--cyan);color:#000}
     </style>
 </head>
 <body>
 
-<!-- PAYMENT PAGE -->
-<div id="payPage" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;">
-    <div style="background:var(--card);border-radius:22px;padding:30px;text-align:center;max-width:450px;width:100%;border:1px solid var(--purple);box-shadow:0 0 50px rgba(179,71,234,.2);">
+<!-- LANDING PAGE (free preview) -->
+<div id="landingPage" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:var(--card);border-radius:22px;padding:30px;max-width:550px;width:100%;text-align:center;">
         <span style="font-size:4em;">🎓</span>
-        <h2 style="margin:10px 0;">EduPoint AI v10.0</h2>
-        <p class="welcome-text">🌟 Your Future Starts Now!</p>
-        <p class="welcome-sub">Know the right course to pursue with confidence</p>
+        <h2 style="margin:10px 0;color:var(--cyan);">EduPoint AI v10.0</h2>
+        <p style="color:var(--text2);">Your smart KCSE cluster points calculator & course advisor</p>
         
-        <div class="pay-box">
-            <p style="font-size:.5em;color:var(--text2);">click down below to unlock premium features</p>
-            <div class="till-num">IT IS WONDERFUL MOMENT TO HAVE YOU HERE</div>
-            <div class="amount-text">KES 100</div>
+        <div class="card" style="margin:20px 0;text-align:left;">
+            <h3>📋 Enter Your 7 Subjects</h3>
+            <div id="previewFields"></div>
+            <button class="btn btn-calc" onclick="previewCluster()" style="margin-top:10px;">⚡ Check My Cluster Points (Free)</button>
+            <div id="previewResult" style="margin-top:15px;display:none;">
+                <div class="sec-green" style="text-align:center;">
+                    🎯 Estimated Cluster Points: <strong id="estPoints">0.000</strong>
+                </div>
+                <div style="text-align:center;margin-top:15px;">
+                    <button class="btn btn-mpesa" onclick="showPaymentPage()">🔓 Unlock Full Analysis (KES 100)</button>
+                </div>
+            </div>
         </div>
-        <p style="font-size:.8em;color:var(--text2);">ENTER YOUR M-PESA PHONE NUMBER</p>
-        <input type="tel" id="payPhone" placeholder="07XX XXX XXX/01XX XXX  XXX " style="text-align:center;margin:10px 0;font-size:1em;">
-        <button class="btn btn-mpesa" onclick="pay()">📱 PAY NOW</button>
+        
+        <div style="margin-top:20px;">
+            <span class="trust-badge">✅ Secure M-PESA Payment</span>
+            <span class="trust-badge">⚡ Instant Results</span>
+            <span class="trust-badge">📚 Trusted by Students</span>
+        </div>
+    </div>
+</div>
+
+<!-- PAYMENT PAGE (premium features) -->
+<div id="paymentPage" style="display:none;min-height:100vh;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:var(--card);border-radius:22px;padding:30px;max-width:450px;width:100%;text-align:center;">
+        <span style="font-size:3em;">💰</span>
+        <h2 style="color:var(--cyan);margin:10px 0;">Unlock Premium Features</h2>
+        <ul style="text-align:left;margin:20px;color:var(--text2);line-height:1.8;">
+            <li>✅ Full cluster point calculation (7 subjects)</li>
+            <li>✅ Courses you qualify for with cutoff gaps</li>
+            <li>✅ Universities you can join</li>
+            <li>✅ Admission chances (qualified / close / not)</li>
+            <li>✅ AI career recommendations</li>
+            <li>✅ Scholarship finder (GPA + major)</li>
+            <li>✅ Save your results & view history</li>
+        </ul>
+        <div class="pay-box">
+            <p>M-PESA Till Number: <strong>123456</strong></p>
+            <p>Amount: <strong>KES 100</strong></p>
+        </div>
+        <p style="font-size:.8em;color:var(--text2);">Enter your M-PESA phone number to receive STK Push</p>
+        <input type="tel" id="payPhone" placeholder="07XX XXX XXX" style="margin:10px 0;">
+        <button class="btn btn-mpesa" onclick="processPayment()">📱 Pay with M-PESA</button>
         <div id="payStatus" style="margin-top:10px;font-size:.85em;"></div>
     </div>
 </div>
 
-<!-- MAIN APP -->
+<!-- MAIN APP (full features, hidden until payment) -->
 <div class="container" id="app" style="display:none;">
     <div class="header">
         <div class="logo">🎓</div>
@@ -331,13 +368,12 @@ H = '''<!DOCTYPE html>
     <!-- CALCULATOR -->
     <div class="card">
         <h3>📋 Enter Your 7 KCSE Subjects</h3>
-        <p style="color:var(--text2);font-size:.8em;margin-bottom:10px;">Select your subjects and grades to calculate cluster points</p>
         <div id="fields"></div>
         <button class="btn btn-calc" onclick="calc()" id="calcBtn" style="margin-top:10px;">⚡ Calculate My Cluster Points</button>
-        <div class="spinner" id="spinner"><div class="spinner-icon">🔄</div><p style="color:var(--text2);">Calculating your results...</p></div>
+        <div class="spinner" id="spinner"><div class="spinner-icon">🔄</div><p>Calculating your results...</p></div>
     </div>
     
-    <!-- RESULTS - No formula shown -->
+    <!-- RESULTS -->
     <div class="card"><h3>📊 Your Results</h3><div id="results"><p style="text-align:center;color:var(--text3);padding:30px;">🔮 Enter your subjects and click calculate</p></div></div>
     
     <!-- ALL COURSES -->
@@ -357,36 +393,33 @@ H = '''<!DOCTYPE html>
         <div class="overflow-x" id="qTable"></div>
     </div>
     
+    <!-- AI CAREER ADVISOR -->
+    <div class="card">
+        <h3>🧑‍💼 AI Career Advisor</h3>
+        <p style="color:var(--text2);font-size:0.85em;margin-bottom:10px;">Select your interests to get personalised career guidance.</p>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">
+            <button class="sort-btn" onclick="selectInterest('Medicine')">🏥 Medicine</button>
+            <button class="sort-btn" onclick="selectInterest('Technology')">💻 Technology</button>
+            <button class="sort-btn" onclick="selectInterest('Engineering')">⚙️ Engineering</button>
+            <button class="sort-btn" onclick="selectInterest('Business')">💼 Business</button>
+            <button class="sort-btn" onclick="selectInterest('Education')">📚 Education</button>
+            <button class="sort-btn" onclick="selectInterest('Arts')">🎭 Arts</button>
+        </div>
+        <div id="careerResult"></div>
+    </div>
     
-<!-- AI CAREER ADVISOR -->
-<div class="card" id="careerAdvisorSection" style="display:none;">
-    <h3>🧑‍💼 AI Career Advisor</h3>
-    <p style="color:var(--text2);font-size:0.85em;margin-bottom:10px;">
-        Select your interests to get personalised career guidance.
-    </p>
-    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;" id="interestBtns">
-        <button class="sort-btn" onclick="selectInterest('Medicine')">🏥 Medicine</button>
-        <button class="sort-btn" onclick="selectInterest('Technology')">💻 Technology</button>
-        <button class="sort-btn" onclick="selectInterest('Engineering')">⚙️ Engineering</button>
-        <button class="sort-btn" onclick="selectInterest('Business')">💼 Business</button>
-        <button class="sort-btn" onclick="selectInterest('Education')">📚 Education</button>
-        <button class="sort-btn" onclick="selectInterest('Arts')">🎭 Arts</button>
+    <!-- SCHOLARSHIP FINDER -->
+    <div class="card">
+        <h3>💰 Scholarship Finder</h3>
+        <p style="color:var(--text2); font-size:0.85em;">Find scholarships that match your GPA and intended major</p>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px;">
+            <input type="text" id="scholarMajor" placeholder="Your intended major (e.g., Computer Science)" style="flex:2;">
+            <input type="number" id="scholarGpa" placeholder="Your GPA (0-4.0)" step="0.1" style="flex:1;">
+        </div>
+        <button class="btn btn-calc" onclick="searchScholarships()" style="background:linear-gradient(135deg, #ff8c00, #ff2e00);">🔍 Find Scholarships</button>
+        <div id="scholarResults" style="margin-top:15px;"></div>
     </div>
-    <div id="careerResult"></div>
-</div>
-
-<!-- SCHOLARSHIP FINDER -->
-<div class="card"> 
-    <h3>💰 Scholarship Finder</h3>
-    <p style="color:var(--text2); font-size:0.85em;">Find scholarships that match your GPA and field of study</p>
-    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px;">
-        <input type="text" id="scholarMajor" placeholder="Your intended major (e.g., Computer Science)" style="flex:2;">
-        <input type="number" id="scholarGpa" placeholder="Your GPA (0-4.0 or 0-12)" step="0.1" style="flex:1;">
-    </div>
-    <button class="btn btn-calc" onclick="searchScholarships()" style="background:linear-gradient(135deg, #ff8c00, #ff2e00);">🔍 Find Scholarships</button>
-    <div id="scholarResults" style="margin-top:15px;"></div>
-</div>
-
+    
     <!-- REFER A FRIEND -->
     <div class="refer-card" id="referCard" style="display:none;">
         <h4>👥 Invite Your Friends & Earn!</h4>
@@ -403,11 +436,11 @@ H = '''<!DOCTYPE html>
         <h3>📢 Follow Us For More Information</h3>
         <p style="color:var(--text2);font-size:.85em;margin-bottom:12px;">Get KUCCPS updates, course tips & career guidance</p>
         <div class="social-row">
-            <a href="https://chat.whatsapp.com/CQB9ZfYe9B683p6Df35YCG" target="_blank" class="si si-wa" title="WhatsApp Group">💬</a>
-            <a href="https://www.facebook.com/profile.php?id=61589138732515" target="_blank" class="si si-fb" title="Facebook">📘</a>
-            <a href="https://www.instagram.com/edupointkenya" target="_blank" class="si si-ig" title="Instagram">📸</a>
-            <a href="https://www.tiktok.com/@edupointkenya" target="_blank" class="si si-tt" title="TikTok">🎵</a>
-            <a href="mailto:academichelpdesk1@gmail.com" class="si si-em" title="Email">✉️</a>
+            <a href="https://chat.whatsapp.com/CQB9ZfYe9B683p6Df35YCG" target="_blank" class="si si-wa">💬</a>
+            <a href="https://www.facebook.com/profile.php?id=61589138732515" target="_blank" class="si si-fb">📘</a>
+            <a href="https://www.instagram.com/edupointkenya" target="_blank" class="si si-ig">📸</a>
+            <a href="https://www.tiktok.com/@edupointkenya" target="_blank" class="si si-tt">🎵</a>
+            <a href="mailto:academichelpdesk1@gmail.com" class="si si-em">✉️</a>
         </div>
         <p style="font-size:.75em;color:var(--text3);margin-top:10px;">
             📧 <b>Email:</b> academichelpdesk1@gmail.com<br>
@@ -417,14 +450,14 @@ H = '''<!DOCTYPE html>
     
     <!-- FOUNDER -->
     <div class="founder-card">
-        <div style="font-size:1em;">👨‍💻</div>
-        <h3 style="color:var(--cyan);margin:5px 0;">Founder & Developer</h3>
-        <h2 style="font-size:1.0em;">Mr. Nex</h2>
-        <p style="color:var(--text2);">CEO & Lead Developer</p>
+        <div style="font-size:2.5em;">👨‍💻</div>
+        <h3 style="color:var(--cyan);margin:8px 0;">Founder & CEO</h3>
+        <h2 style="font-size:1.4em;">Mr. Nex</h2>
+        <p style="color:var(--text2);">Full Stack Developer • AI Systems Engineer</p>
         <div class="contact-row">
             <a href="tel:0114812308" class="contact-btn" style="background:var(--card);border:1px solid var(--cyan);color:var(--cyan);">📞 Call</a>
-            <a href="mailto:nexo27716@gmail.com" class="contact-btn" style="background:var(--card);border:1px solid var(--purple);color:var(--purple);">✉️ Gmail</a>
-            <a href="https://www.whatsapp.com/business/" target="_blank" class="contact-btn" style="background:var(--wa);color:#fff;">💬 WhatsApp</a>
+            <a href="mailto:nexo27716@gmail.com" class="contact-btn" style="background:var(--card);border:1px solid var(--purple);color:var(--purple);">✉️ Email</a>
+            <a href="https://wa.me/254114812308" target="_blank" class="contact-btn" style="background:var(--wa);color:#fff;">💬 WhatsApp</a>
         </div>
     </div>
     
@@ -437,114 +470,203 @@ H = '''<!DOCTYPE html>
 <div class="notif" id="notif"></div>
 
 <script>
-var S=''' + json.dumps(S) + ''';
-var G=''' + json.dumps(G) + ''';
-var pts=null,qd=[],st=null;
+var S = ''' + json.dumps(S) + ''';
+var G = ''' + json.dumps(G) + ''';
+var pts = null, qd = [], st = null;
+var previewGrades = {};
 
-function pay(){
-    document.getElementById('payStatus').innerHTML='⏳ Sending STK Push...';
-    setTimeout(function(){
-        document.getElementById('payStatus').innerHTML='<span style="color:var(--green);">✅ Payment confirmed! Access granted!</span>';
-        setTimeout(function(){
-            document.getElementById('payPage').style.display='none';
-            document.getElementById('app').style.display='block';
-            build();
-            notify('✅ Welcome! Your future starts now!','success');
-        }, 800);
-    }, 2000);
-}
-function build(){
-    var h='';
-    for(var i=0;i<7;i++){
-        h+='<div class="subj-row"><select class="ss"><option value="">Subject '+(i+1)+'</option>';
-        for(var j=0;j<S.length;j++){h+='<option value="'+S[j]+'">'+S[j]+'</option>';}
-        h+='</select><select class="gs gs"><option value="">Grade</option>';
-        for(var k=0;k<G.length;k++){h+='<option value="'+G[k]+'">'+G[k]+'</option>';}
-        h+='</select></div>';
+function buildPreview() {
+    var h = '';
+    for (var i = 0; i < 7; i++) {
+        h += '<div class="subj-row"><select class="previewSubj" data-idx="'+i+'"><option value="">Subject '+(i+1)+'</option>';
+        for (var j = 0; j < S.length; j++) { h += '<option value="'+S[j]+'">'+S[j]+'</option>'; }
+        h += '</select><select class="previewGrade"><option value="">Grade</option>';
+        for (var k = 0; k < G.length; k++) { h += '<option value="'+G[k]+'">'+G[k]+'</option>'; }
+        h += '</select></div>';
     }
-    document.getElementById('fields').innerHTML=h;
+    document.getElementById('previewFields').innerHTML = h;
 }
 
-function calc(){
-    var ss=document.querySelectorAll('.ss'),gs=document.querySelectorAll('.gs');var gr={};
-    for(var i=0;i<7;i++){if(!ss[i].value||!gs[i].value){notify('Fill all 7 subjects','error');return;}gr[ss[i].value]=gs[i].value;}
-    if(Object.keys(gr).length<7){notify('Different subjects','error');return;}
-    document.getElementById('calcBtn').disabled=true;document.getElementById('spinner').classList.add('show');
-    fetch('/api/calc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({grades:gr})})
-    .then(function(r){return r.json();})
-    .then(function(d){
-        pts=d.cp;qd=d.ac;st=d.st;
-        showR(d);showQ(d);showAI();
-        document.getElementById('calcBtn').disabled=false;document.getElementById('spinner').classList.remove('show');
-        document.getElementById('referCard').style.display='block';
-        notify('✅ Points: '+pts.toFixed(3),'success');
-    });
-}
-
-function showR(d){
-    var h='<div class="result-box"><div class="pts-big">'+pts.toFixed(3)+'</div><p>Your Cluster Points</p></div>';
-    if(d.q.length){h+='<div class="sec-green">✅ '+d.q.length+' Courses You Qualify For</div><table><tr><th>Course</th><th>University</th><th>Cutoff</th><th>Gap</th></tr>';for(var i=0;i<Math.min(d.q.length,10);i++){var c=d.q[i];h+='<tr><td>'+c.i+' '+c.n+'</td><td>'+c.u+'</td><td>'+c.c.toFixed(3)+'</td><td style="color:var(--green);">+'+c.g.toFixed(1)+'</td></tr>';}h+='</table>';}
-    if(d.cl.length){h+='<div class="sec-yellow">⚠️ '+d.cl.length+' Close Matches</div><table><tr><th>Course</th><th>University</th><th>Cutoff</th><th>Gap</th></tr>';for(var i=0;i<Math.min(d.cl.length,5);i++){var c=d.cl[i];h+='<tr><td>'+c.i+' '+c.n+'</td><td>'+c.u+'</td><td>'+c.c.toFixed(3)+'</td><td style="color:var(--yellow);">'+c.g.toFixed(1)+'</td></tr>';}h+='</table>';}
-    document.getElementById('results').innerHTML=h;
-}
-
-var selectedInterests = [];
-
-function selectInterest(interest) {
-    if (selectedInterests.includes(interest)) {
-        selectedInterests = selectedInterests.filter(i => i !== interest);
-    } else {
-        selectedInterests.push(interest);
-    }
-    // Highlight active buttons
-    var btns = document.querySelectorAll('#interestBtns .sort-btn');
-    btns.forEach(function(b) {
-        if (selectedInterests.includes(b.textContent.trim())) {
-            b.classList.add('active');
-        } else {
-            b.classList.remove('active');
+function previewCluster() {
+    var subjSelects = document.querySelectorAll('.previewSubj');
+    var gradeSelects = document.querySelectorAll('.previewGrade');
+    var grades = {};
+    for (var i = 0; i < 7; i++) {
+        if (!subjSelects[i].value || !gradeSelects[i].value) {
+            notify('Please fill all 7 subjects and grades', 'error');
+            return;
         }
-    });
-    // Fetch career advice
-    fetch('/api/career-advisor', {
+        grades[subjSelects[i].value] = gradeSelects[i].value;
+    }
+    previewGrades = grades;
+    
+    fetch('/api/calc', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({cp: pts || 0, interests: selectedInterests})
+        body: JSON.stringify({grades: grades})
     })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-        var html = '';
-        data.careers.forEach(function(c) {
-            html += '<div class="ai-card" style="margin-top:10px;">' +
-                '<p><b>Career Path:</b> ' + c.path + '</p>' +
-                '<p><b>Skills Needed:</b> ' + c.skills + '</p>' +
-                '<p><b>Expected Salary:</b> KES ' + c.salary + '</p>' +
-                '<p><b>Growth:</b> ' + c.growth + '</p>' +
-                '<p><b>Advice:</b> ' + c.advice + '</p>' +
-            '</div>';
-        });
-        if (data.tip) html += '<p style="margin-top:10px;color:var(--cyan);">💡 ' + data.tip + '</p>';
-        document.getElementById('careerResult').innerHTML = html;
+    .then(res => res.json())
+    .then(data => {
+        if (data.cp !== undefined) {
+            document.getElementById('estPoints').innerText = data.cp.toFixed(3);
+            document.getElementById('previewResult').style.display = 'block';
+        } else {
+            notify('Error calculating cluster points. Check subjects.', 'error');
+        }
+    })
+    .catch(err => notify('Calculation failed. Try again.', 'error'));
+}
+
+function showPaymentPage() {
+    document.getElementById('landingPage').style.display = 'none';
+    document.getElementById('paymentPage').style.display = 'flex';
+}
+
+function processPayment() {
+    var phone = document.getElementById('payPhone').value;
+    if (!phone) {
+        notify('Enter your M-PESA phone number', 'error');
+        return;
+    }
+    document.getElementById('payStatus').innerHTML = '⏳ Sending STK Push...';
+    setTimeout(function() {
+        document.getElementById('payStatus').innerHTML = '<span style="color:var(--green);">✅ Payment successful! Redirecting...</span>';
+        setTimeout(function() {
+            document.getElementById('paymentPage').style.display = 'none';
+            document.getElementById('app').style.display = 'block';
+            build();
+            // Restore preview grades into main form
+            var mainSubj = document.querySelectorAll('#fields .ss');
+            var mainGrade = document.querySelectorAll('#fields .gs');
+            for (var i = 0; i < mainSubj.length; i++) {
+                var subj = mainSubj[i].value;
+                if (previewGrades[subj]) {
+                    mainGrade[i].value = previewGrades[subj];
+                }
+            }
+            // Auto-calculate after short delay
+            setTimeout(function() { calc(); }, 300);
+            notify('✅ Welcome! Your future starts now!', 'success');
+        }, 1500);
+    }, 2000);
+}
+
+function build() {
+    var h = '';
+    for (var i = 0; i < 7; i++) {
+        h += '<div class="subj-row"><select class="ss"><option value="">Subject '+(i+1)+'</option>';
+        for (var j = 0; j < S.length; j++) { h += '<option value="'+S[j]+'">'+S[j]+'</option>'; }
+        h += '</select><select class="gs gs"><option value="">Grade</option>';
+        for (var k = 0; k < G.length; k++) { h += '<option value="'+G[k]+'">'+G[k]+'</option>'; }
+        h += '</select></div>';
+    }
+    document.getElementById('fields').innerHTML = h;
+}
+
+function calc() {
+    var ss = document.querySelectorAll('.ss'), gs = document.querySelectorAll('.gs');
+    var gr = {};
+    for (var i = 0; i < 7; i++) {
+        if (!ss[i].value || !gs[i].value) { notify('Fill all 7 subjects', 'error'); return; }
+        gr[ss[i].value] = gs[i].value;
+    }
+    document.getElementById('calcBtn').disabled = true;
+    document.getElementById('spinner').classList.add('show');
+    fetch('/api/calc', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({grades: gr})
+    })
+    .then(r => r.json())
+    .then(d => {
+        pts = d.cp; qd = d.ac; st = d.st;
+        showR(d); showQ(d); showAI();
+        document.getElementById('calcBtn').disabled = false;
+        document.getElementById('spinner').classList.remove('show');
+        document.getElementById('referCard').style.display = 'block';
+        notify('✅ Points: '+pts.toFixed(3), 'success');
     });
 }
 
-function showQ(d){
-    document.getElementById('qSection').style.display='block';
-    document.getElementById('totalPts').textContent=pts.toFixed(3);
-    document.getElementById('qCount').textContent=st.qc;
-    document.getElementById('cCount').textContent=st.cc;
-    document.getElementById('nCount').textContent=st.nc;
-    document.getElementById('sRate').textContent=st.r+'%';
-    document.getElementById('careerAdvisorSection').style.display = 'block';
-    renderT(qd);
-    document.getElementById('scholarshipCard').style.display = "block";
+function showR(d) {
+    var h = '<div class="result-box"><div class="pts-big">'+pts.toFixed(3)+'</div><p>Your Cluster Points</p></div>';
+    if (d.q.length) {
+        h += '<div class="sec-green">✅ '+d.q.length+' Courses You Qualify For</div><div class="overflow-x"><table><tr><th>Course</th><th>University</th><th>Cutoff</th><th>Gap</th></tr>';
+        for (var i=0;i<Math.min(d.q.length,10);i++) {
+            var c = d.q[i];
+            h += '<tr><td>'+c.i+' '+c.n+'</td><td>'+c.u+'</td><td>'+c.c.toFixed(3)+'</td><td style="color:var(--green);">+'+c.g.toFixed(1)+'</td></tr>';
+        }
+        h += '</table></div>';
+    }
+    if (d.cl.length) {
+        h += '<div class="sec-yellow">⚠️ '+d.cl.length+' Close Matches</div><div class="overflow-x"><table><tr><th>Course</th><th>University</th><th>Cutoff</th><th>Gap</th></tr>';
+        for (var i=0;i<Math.min(d.cl.length,5);i++) {
+            var c = d.cl[i];
+            h += '<tr><td>'+c.i+' '+c.n+'</td><td>'+c.u+'</td><td>'+c.c.toFixed(3)+'</td><td style="color:var(--yellow);">'+c.g.toFixed(1)+'</td></tr>';
+        }
+        h += '</table></div>';
+    }
+    document.getElementById('results').innerHTML = h;
 }
 
-function renderT(cs){
-    var h='<table><tr><th>#</th><th>Course</th><th>University</th><th>Cutoff</th><th>Gap</th><th>Status</th></tr>';
-    for(var i=0;i<cs.length;i++){var c=cs[i],g=c.g;var sc=g>=0?'bg-green':(g>=-2?'bg-yellow':'bg-red');var st=g>=0?'✅ Qualified':(g>=-2?'⚠️ Close':'❌ Not');var color=g>=0?'var(--green)':(g>=-2?'var(--yellow)':'var(--red)');h+='<tr><td>'+(i+1)+'</td><td>'+c.i+' '+c.n+'</td><td>'+c.u+'</td><td>'+c.c.toFixed(3)+'</td><td style="color:'+color+';font-weight:700;">'+(g>=0?'+':'')+g.toFixed(1)+'</td><td><span class="badge '+sc+'">'+st+'</span></td></tr>';}
-    h+='</table>';document.getElementById('qTable').innerHTML=h;
+function showQ(d) {
+    document.getElementById('qSection').style.display = 'block';
+    document.getElementById('totalPts').textContent = pts.toFixed(3);
+    document.getElementById('qCount').textContent = st.qc;
+    document.getElementById('cCount').textContent = st.cc;
+    document.getElementById('nCount').textContent = st.nc;
+    document.getElementById('sRate').textContent = st.r + '%';
+    renderT(qd);
 }
+
+function renderT(cs) {
+    var h = '<table><tr><th>#</th><th>Course</th><th>University</th><th>Cutoff</th><th>Gap</th><th>Status</th></tr>';
+    for (var i=0;i<cs.length;i++) {
+        var c = cs[i], g = c.g;
+        var sc = g>=0?'bg-green':(g>=-2?'bg-yellow':'bg-red');
+        var sts = g>=0?'✅ Qualified':(g>=-2?'⚠️ Close':'❌ Not');
+        var color = g>=0?'var(--green)':(g>=-2?'var(--yellow)':'var(--red)');
+        h += '<tr><td>'+(i+1)+'</td><td>'+c.i+' '+c.n+'</td><td>'+c.u+'</td><td>'+c.c.toFixed(3)+'</td><td style="color:'+color+';font-weight:700;">'+(g>=0?'+':'')+g.toFixed(1)+'</td><td><span class="badge '+sc+'">'+sts+'</span></td></tr>';
+    }
+    h += '</table>';
+    document.getElementById('qTable').innerHTML = h;
+}
+
+function filterQ() {
+    var q = document.getElementById('qSearch').value.toLowerCase().trim();
+    if (!q) { renderT(qd); return; }
+    var f = [];
+    for (var i=0;i<qd.length;i++) {
+        if (qd[i].n.toLowerCase().includes(q) || qd[i].u.toLowerCase().includes(q)) f.push(qd[i]);
+    }
+    renderT(f);
+}
+
+function showAI() {
+    fetch('/api/ai', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({cp: pts})
+    })
+    .then(r => r.json())
+    .then(d => {
+        var html = '<div class="ai-card"><div class="ai-badge">🤖 '+d.l+'</div><p style="font-size:1.05em;">'+d.a+'</p><p style="margin-top:8px;">🔥 '+d.p.join(' • ')+'</p></div>';
+        document.getElementById('ai').innerHTML = html;
+    });
+}
+
+function selectInterest(interest) {
+    var messages = {
+        'Medicine': '🎓 Recommended courses: Medicine & Surgery, Nursing, Pharmacy, Clinical Medicine. High demand in Kenya.',
+        'Technology': '💻 Recommended: Computer Science, IT, Software Engineering. Strong job market with high earning potential.',
+        'Engineering': '⚙️ Recommended: Civil, Electrical, Mechanical, Mechatronic Engineering. Great career prospects.',
+        'Business': '💼 Recommended: Commerce, Economics, Actuarial Science, Business Management. Versatile career options.',
+        'Education': '📚 Recommended: Education (Science/Arts), Early Childhood. Stable career in teaching.',
+        'Arts': '🎭 Recommended: BA, Journalism, Communication. Explore creative and social fields.'
+    };
+    document.getElementById('careerResult').innerHTML = '<div class="sec-green">✨ ' + messages[interest] + '</div>';
+}
+
 function searchScholarships() {
     var major = document.getElementById('scholarMajor').value;
     var gpa = parseFloat(document.getElementById('scholarGpa').value);
@@ -554,59 +676,51 @@ function searchScholarships() {
     }
     var resultsDiv = document.getElementById('scholarResults');
     resultsDiv.innerHTML = '<div class="spinner show"><div class="spinner-icon">🔄</div><p>Searching scholarships...</p></div>';
-    
     fetch('/api/scholarships', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({major: major, gpa: gpa})
     })
-    .then(function(res) { return res.json(); })
-    .then(function(data) {
+    .then(res => res.json())
+    .then(data => {
         if (data.length === 0) {
-            resultsDiv.innerHTML = '<div class="sec-yellow" style="text-align:center;">😞 No scholarships match your criteria. Try a lower GPA or broader major.</div>';
+            resultsDiv.innerHTML = '<div class="sec-yellow">😞 No scholarships match your criteria. Try a lower GPA or broader major.</div>';
             return;
         }
-        var html = '<div style="margin-top:10px;"><p class="sec-green">✅ ' + data.length + ' scholarships found</p>';
-        html += '<div class="overflow-x"><table style="width:100%"><tr><th>Scholarship</th><th>Amount</th><th>Min GPA</th><th>Eligibility</th><th>Deadline</th><th>Link</th></tr>';
-        for (var i=0; i<data.length; i++) {
-            var s = data[i];
-            html += '<tr>' +
-                '<td><strong>' + s.name + '</strong></td>' +
-                '<td>' + s.amount + '</td>' +
-                '<td>' + s.min_gpa + '</td>' +
-                '<td>' + (s.income_req || s.major) + '</td>' +
-                '<td>' + s.deadline + '</td>' +
-                '<td><a href="' + s.link + '" target="_blank" style="color:var(--cyan);">Apply</a></td>' +
-                '</tr>';
-        }
-        html += '</table></div></div>';
+        var html = '<div class="sec-green">✅ ' + data.length + ' scholarships found</div>';
+        html += '<div class="overflow-x"><table><tr><th>Scholarship</th><th>Amount</th><th>Min GPA</th><th>Eligibility</th><th>Deadline</th><th>Link</th></tr>';
+        data.forEach(s => {
+            html += `<tr><td><strong>${s.name}</strong></td><td>${s.amount}</td><td>${s.min_gpa}</td><td>${s.income_req || s.major}</td><td>${s.deadline}</td><td><a href="${s.link}" target="_blank" style="color:var(--cyan);">Apply</a></td></tr>`;
+        });
+        html += '</table></div>';
         resultsDiv.innerHTML = html;
     })
-    .catch(function(err) {
-        resultsDiv.innerHTML = '<div class="sec-yellow">⚠️ Error loading scholarships. Please try again.</div>';
+    .catch(err => {
+        resultsDiv.innerHTML = '<div class="sec-yellow">⚠️ Error loading scholarships. Try again.</div>';
         console.error(err);
     });
 }
 
-function filterQ(){var q=document.getElementById('qSearch').value.toLowerCase().trim();if(!q){renderT(qd);return;}var f=[];for(var i=0;i<qd.length;i++){if(qd[i].n.toLowerCase().includes(q)||qd[i].u.toLowerCase().includes(q))f.push(qd[i]);}renderT(f);}
-
-function showAI(){
-    fetch('/api/ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cp:pts})})
-    .then(function(r){return r.json();})
-    .then(function(d){
-        var html='<div class="ai-card"><div class="ai-badge">🤖 '+d.l+'</div><p style="font-size:1.05em;">'+d.a+'</p><p style="margin-top:8px;">🔥 '+d.p.join(' • ')+'</p></div>';
-        document.getElementById('ai').innerHTML=html;
-    });
+function copyRef() {
+    navigator.clipboard.writeText('https://edupoint.app/ref=SHARE');
+    notify('📋 Referral link copied! Share with friends.', 'success');
 }
 
-function copyRef(){navigator.clipboard.writeText('https://edupoint.app/ref=SHARE');notify('📋 Referral link copied! Share with friends.','success');}
+function notify(m, t) {
+    var n = document.getElementById('notif');
+    n.className = 'notif notif-' + t;
+    n.textContent = m;
+    n.style.display = 'block';
+    setTimeout(function() { n.style.display = 'none'; }, 4000);
+}
 
-function notify(m,t){var n=document.getElementById('notif');n.className='notif notif-'+t;n.textContent=m;n.style.display='block';setTimeout(function(){n.style.display='none';},4000);}
+// Initialize
+buildPreview();
 </script>
 </body>
 </html>'''
 
 import os
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 8000))
+    port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
