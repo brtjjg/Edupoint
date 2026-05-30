@@ -847,22 +847,68 @@ H = '''<!DOCTYPE html>
         </p>
     </div>
     
-    <!-- FOUNDER -->
-    <div class="founder-card">
-        <div style="font-size:2.5em;">👨‍💻</div>
-        <h3 style="color:var(--cyan);margin:8px 0;">Founder & CEO</h3>
-        <h2 style="font-size:1.4em;">Mr. Nex</h2>
-        <p style="color:var(--text2);">Full Stack Developer • AI Systems Engineer</p>
-        <div class="contact-row">
-            <a href="tel:0114812308" class="contact-btn" style="background:var(--card);border:1px solid var(--cyan);color:var(--cyan);">📞 Call</a>
-            <a href="mailto:nexo27716@gmail.com" class="contact-btn" style="background:var(--card);border:1px solid var(--purple);color:var(--purple);">✉️ Email</a>
-            <a href="https://wa.me/254114812308" target="_blank" class="contact-btn" style="background:var(--wa);color:#fff;">💬 WhatsApp</a>
+    <!-- FOUNDER - Collapsible (appears on every page) -->
+<div class="founder-card" style="margin-top: 30px;">
+    <div style="text-align: center;">
+        <img src="https://via.placeholder.com/100?text=Mr.Nex" alt="Mr. Nex" style="width: 100px; height: 100px; border-radius: 50%; border: 3px solid var(--cyan); margin-bottom: 10px;">
+        <h2 style="color: var(--cyan); margin-bottom: 5px;">Brian Ondieki (Mr. Nex)</h2>
+        <p style="color: var(--purple); font-weight: bold;">Founder & Lead Developer</p>
+        <p style="color: var(--text2); font-style: italic;">Building AI-powered educational solutions for students.</p>
+        <button id="toggleFounderBtn" class="btn btn-outline" style="margin-top: 10px; width: auto; padding: 6px 20px;">📖 View Full Profile</button>
+    </div>
+    <div id="founderDetails" style="display: none; margin-top: 20px; border-top: 1px solid var(--border); padding-top: 20px;">
+        <!-- Social links -->
+        <div style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-bottom: 20px;">
+            <a href="https://github.com/brtjjg" target="_blank" class="social-icon" style="background:#333; color:white;">🐙 GitHub</a>
+            <a href="https://linkedin.com/in/yourprofile" target="_blank" class="social-icon" style="background:#0077b5; color:white;">🔗 LinkedIn</a>
+            <a href="https://facebook.com/yourpage" target="_blank" class="social-icon" style="background:#1877f2; color:white;">📘 Facebook</a>
+            <a href="https://twitter.com/yourhandle" target="_blank" class="social-icon" style="background:#1DA1F2; color:white;">🐦 Twitter</a>
+            <a href="mailto:nexo27716@gmail.com" class="social-icon" style="background:#ea4335; color:white;">✉️ Email</a>
+        </div>
+        <!-- About -->
+        <div style="background: rgba(0,229,255,0.05); padding: 15px; border-radius: 16px; margin: 15px 0;">
+            <h3 style="color: var(--cyan);">📖 About Me</h3>
+            <p style="color: var(--text2); line-height: 1.6;">I am a software developer passionate about educational technology, artificial intelligence, web applications, and mobile app development. My goal is to create innovative solutions that help students access information, make better career decisions, and succeed academically.</p>
+        </div>
+        <!-- Skills -->
+        <div style="margin: 15px 0;">
+            <h3 style="color: var(--cyan);">⚙️ Skills</h3>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                <span class="badge bg-green">Python</span><span class="badge bg-green">Flask</span><span class="badge bg-green">Firebase</span><span class="badge bg-green">AI Development</span><span class="badge bg-green">Android Apps</span><span class="badge bg-green">HTML/CSS</span><span class="badge bg-green">JavaScript</span><span class="badge bg-green">Git & GitHub</span>
+            </div>
+        </div>
+        <!-- Services -->
+        <div style="margin: 15px 0;">
+            <h3 style="color: var(--cyan);">💼 Services I Offer</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap: 10px;">
+                <div class="stat-card">💻 Website Development</div><div class="stat-card">📱 Mobile App Development</div><div class="stat-card">🤖 AI Chatbot Development</div><div class="stat-card">🎓 Educational Platforms</div><div class="stat-card">💳 M-PESA Integration</div><div class="stat-card">☁️ Hosting & Deployment</div>
+            </div>
+        </div>
+        <!-- Projects -->
+        <div style="margin: 15px 0;">
+            <h3 style="color: var(--cyan);">🚀 Current Projects</h3>
+            <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">
+                <span class="badge bg-yellow">EduPoint AI</span><span class="badge bg-yellow">KUCCPS Assistant</span><span class="badge bg-yellow">Engineering Learning App</span><span class="badge bg-yellow">Scholarship Finder</span>
+            </div>
+        </div>
+        <!-- Mission -->
+        <div style="background: linear-gradient(135deg, rgba(0,229,255,0.1), rgba(179,71,234,0.1)); padding: 15px; border-radius: 16px; margin: 15px 0; text-align: center;">
+            <p style="font-size: 1.1em; font-weight: bold; color: var(--yellow);">🌟 My Mission</p>
+            <p style="color: var(--text2);">To use technology to simplify education, career guidance, and access to opportunities for students across Kenya and Africa.</p>
+        </div>
+        <!-- Contact Buttons -->
+        <div style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 20px;">
+            <a href="mailto:nexo27716@gmail.com" class="btn btn-calc" style="width: auto; padding: 8px 20px;">📧 Email Me</a>
+            <a href="mailto:nexo27716@gmail.com?subject=Hiring%20Inquiry&body=Hello%20Mr.%20Nex,%20I%20am%20interested%20in%20hiring%20you." class="btn btn-calc" style="width: auto; background: var(--purple); padding: 8px 20px;">💼 Hire Me</a>
+            <a href="mailto:nexo27716@gmail.com?subject=Partnership%20Request&body=Dear%20Mr.%20Nex,%20I%20would%20like%20to%20discuss%20a%20partnership." class="btn btn-outline" style="width: auto; padding: 8px 20px;">🤝 Partnership Request</a>
+            <a href="https://wa.me/254114812308?text=Hello%20Mr.%20Nex,%20I%20saw%20your%20website." target="_blank" class="btn btn-wa" style="width: auto; padding: 8px 20px;">📱 WhatsApp</a>
         </div>
     </div>
-    
-    <div class="footer">
-        <p>© 2026 <b>EduPoint AI v10.0</b> • All Rights Reserved</p>
-    </div>
+</div>
+
+<!-- Copyright Footer (visible on all pages) -->
+<div style="text-align: center; padding: 20px; margin-top: 30px; border-top: 1px solid var(--border); font-size: 0.8em; color: var(--text3);">
+    <p>© 2026 EduPoint AI. All Rights Reserved.</p>
 </div>
 
 <a href="https://chat.whatsapp.com/CQB9ZfYe9B683p6Df35YCG" target="_blank" class="wa-float">💬</a>
@@ -1177,6 +1223,23 @@ function notify(m, t) {
     n.style.display = 'block';
     setTimeout(function() { n.style.display = 'none'; }, 4000);
 }
+
+// Toggle founder details (inside the existing <script>)
+document.addEventListener('DOMContentLoaded', function() {
+    var btn = document.getElementById('toggleFounderBtn');
+    var details = document.getElementById('founderDetails');
+    if (btn && details) {
+        btn.addEventListener('click', function() {
+            if (details.style.display === 'none') {
+                details.style.display = 'block';
+                btn.innerHTML = '✖ Show Less';
+            } else {
+                details.style.display = 'none';
+                btn.innerHTML = '📖 View Full Profile';
+            }
+        });
+    }
+});
 
 // Initialize
 buildPreview();
