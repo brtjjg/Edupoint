@@ -9,8 +9,11 @@ from flask import Flask, request, jsonify, render_template
 import json, os
 import json
 import os
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask import session
 
 app = Flask(__name__)
+app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-change-this')
 app.secret_key = os.urandom(24)
 
 W = {'A':12,'A-':11,'B+':10,'B':9,'B-':8,'C+':7,'C':6,'C-':5,'D+':4,'D':3,'D-':2,'E':1}
@@ -473,6 +476,74 @@ def ai():
     else: l,a,p = "BUILDING","🎯 Certificate/Diploma.",["Certificate","Diploma","Artisan"]
     return jsonify({"l":l,"a":a,"p":p})
 
+@app.route('/register', methods=['POST'])
+def register():
+    data = request.json
+    username = data.get('username')
+    email = data.get('email')
+    phone = data.get('phone')
+    password = data.get('password')
+    if not username or not password:
+        return jsonify({'error': 'Username and password required'}), 400
+    hashed = generate_password_hash(password)
+    with get_db() as db:
+        try:
+            db.execute('INSERT INTO users (username, email, phone, password_hash, created_at) VALUES (?, ?, ?, ?, ?)',
+                       (username, email, phone, hashed, datetime.now().isoformat()))
+            db.commit()
+            user_id = db.execute('SELECT last_insert_rowid()').fetchone()[0]
+            session['user_id'] = user_id
+            session['username'] = username
+            return jsonify({'status': 'ok', 'user_id': user_id})
+        except Exception as e:
+            return jsonify({'error': 'Username or email already exists'}), 400
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.json
+    identifier = data.get('identifier')  # username, email, or phone
+    password = data.get('password')
+    with get_db() as db:
+        user = db.execute('SELECT * FROM users WHERE username=? OR email=? OR phone=?', 
+                          (identifier, identifier, identifier)).fetchone()
+        if user and check_password_hash(user['password_hash'], password):
+            session['user_id'] = user['id']
+            session['username'] = user['username']
+            return jsonify({'status': 'ok', 'username': user['username']})
+        else:
+            return jsonify({'error': 'Invalid credentials'}), 401
+
+@app.route('/logout', methods=['POST'])
+def logout():
+    session.pop('user_id', None)
+    session.pop('username', None)
+    return jsonify({'status': 'ok'})
+
+@app.route('/api/save_user_result', methods=['POST'])
+def save_user_result():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+    data = request.json
+    grades = data.get('grades')
+    cluster_points = data.get('cluster_points')
+    qualified = data.get('qualified')
+    with get_db() as db:
+        db.execute('''
+            INSERT INTO user_saved_results (user_id, grades, cluster_points, qualified_courses, created_at)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (session['user_id'], json.dumps(grades), cluster_points, json.dumps(qualified), datetime.now().isoformat()))
+        db.commit()
+    return jsonify({'status': 'ok'})
+
+@app.route('/api/get_user_results', methods=['GET'])
+def get_user_results():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+    with get_db() as db:
+        rows = db.execute('SELECT * FROM user_saved_results WHERE user_id=? ORDER BY created_at DESC', (session['user_id'],)).fetchall()
+    results = [dict(row) for row in rows]
+    return jsonify(results)
+
 @app.route('/api/career-advisor', methods=['POST'])
 def career_advisor():
     data = request.get_json()
@@ -723,9 +794,43 @@ H = '''<!DOCTYPE html>
         <p style="font-size:.8em; color:var(--text2);">Enter your M-PESA phone number to receive STK Push</p>
         <input type="tel" id="payPhone" placeholder="07XX XXX XXX" style="width:100%; margin:10px 0;">
         
+       <!-- Login Modal -->
+<div id="loginModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; align-items:center; justify-content:center;">
+    <div style="background:var(--card); max-width:400px; width:90%; border-radius:20px; padding:20px;">
+        <h3 style="color:var(--cyan);">Login to Your Account</h3>
+        <input type="text" id="loginIdentifier" placeholder="Username / Email / Phone" style="width:100%; margin:10px 0;">
+        <input type="password" id="loginPassword" placeholder="Password" style="width:100%; margin:10px 0;">
+        <button class="btn btn-calc" onclick="userLogin()">Login</button>
+        <p style="margin-top:10px;">Don't have an account? <a href="#" onclick="showRegisterModal()">Register here</a></p>
+        <button class="btn btn-outline" onclick="closeLoginModal()">Cancel</button>
+        <div id="loginStatus"></div>
+    </div>
+</div>
+
+<!-- Register Modal -->
+<div id="registerModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; align-items:center; justify-content:center;">
+    <div style="background:var(--card); max-width:400px; width:90%; border-radius:20px; padding:20px;">
+        <h3 style="color:var(--cyan);">Create an Account</h3>
+        <input type="text" id="regUsername" placeholder="Username" style="width:100%; margin:10px 0;">
+        <input type="email" id="regEmail" placeholder="Email (optional)" style="width:100%; margin:10px 0;">
+        <input type="tel" id="regPhone" placeholder="Phone (optional)" style="width:100%; margin:10px 0;">
+        <input type="password" id="regPassword" placeholder="Password" style="width:100%; margin:10px 0;">
+        <button class="btn btn-calc" onclick="userRegister()">Register</button>
+        <p style="margin-top:10px;">Already have an account? <a href="#" onclick="showLoginModal()">Login here</a></p>
+        <button class="btn btn-outline" onclick="closeRegisterModal()">Cancel</button>
+        <div id="registerStatus"></div>
+    </div>
+</div>
+
+<!-- Button to open login/register (optional – add a "My Account" button) -->
+<div style="text-align:center; margin-top:10px;">
+    <button class="btn btn-outline" onclick="showLoginModal()" id="accountBtn">👤 My Account</button>
+    <span id="userGreeting" style="color:var(--green); margin-left:10px;"></span>
+</div>
+
         <!-- Terms & Privacy checkbox -->
         <div style="margin:15px 0; text-align:left;">
-            <label>
+            <label >
                 <input type="checkbox" id="agreeTerms" required>
                 I agree to the <a href="/terms" target="_blank" style="color:var(--cyan);">Terms & Conditions</a> and
                 <a href="/privacy" target="_blank" style="color:var(--cyan);">Privacy Policy</a>
@@ -1100,7 +1205,13 @@ function calc() {
         document.getElementById('spinner').classList.remove('show');
         document.getElementById('referCard').style.display = 'block';
         notify('✅ Points: '+pts.toFixed(3), 'success');
+       // If user is logged in, save this result
+
     });
+// If user is logged in, save this result
+if (currentUser) {
+    saveCurrentResult(gr, pts, d.q);
+}
 }
 
 function showR(d) {
@@ -1271,6 +1382,118 @@ function sendChatMessage() {
 function quickQuestion(question) {
     document.getElementById('chatInput').value = question;
     sendChatMessage();
+}
+
+// Global variable to track login status
+let currentUser = null;
+
+function showLoginModal() {
+    document.getElementById('loginModal').style.display = 'flex';
+}
+function closeLoginModal() {
+    document.getElementById('loginModal').style.display = 'none';
+    document.getElementById('loginStatus').innerHTML = '';
+}
+function showRegisterModal() {
+    closeLoginModal();
+    document.getElementById('registerModal').style.display = 'flex';
+}
+function closeRegisterModal() {
+    document.getElementById('registerModal').style.display = 'none';
+    document.getElementById('registerStatus').innerHTML = '';
+}
+
+function userLogin() {
+    let identifier = document.getElementById('loginIdentifier').value;
+    let password = document.getElementById('loginPassword').value;
+    if (!identifier || !password) {
+        document.getElementById('loginStatus').innerHTML = '<span style="color:red;">All fields required</span>';
+        return;
+    }
+    fetch('/login', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({identifier, password})
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'ok') {
+            currentUser = data.username;
+            document.getElementById('userGreeting').innerHTML = `Welcome, ${currentUser} | <a href="#" onclick="userLogout()">Logout</a>`;
+            closeLoginModal();
+            notify('Login successful!', 'success');
+            // Optionally, load saved results
+            loadSavedResults();
+        } else {
+            document.getElementById('loginStatus').innerHTML = '<span style="color:red;">' + (data.error || 'Login failed') + '</span>';
+        }
+    })
+    .catch(err => console.error(err));
+}
+
+function userRegister() {
+    let username = document.getElementById('regUsername').value;
+    let email = document.getElementById('regEmail').value;
+    let phone = document.getElementById('regPhone').value;
+    let password = document.getElementById('regPassword').value;
+    if (!username || !password) {
+        document.getElementById('registerStatus').innerHTML = '<span style="color:red;">Username and password required</span>';
+        return;
+    }
+    fetch('/register', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({username, email, phone, password})
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'ok') {
+            currentUser = username;
+            document.getElementById('userGreeting').innerHTML = `Welcome, ${currentUser} | <a href="#" onclick="userLogout()">Logout</a>`;
+            closeRegisterModal();
+            notify('Registration successful! You are now logged in.', 'success');
+        } else {
+            document.getElementById('registerStatus').innerHTML = '<span style="color:red;">' + (data.error || 'Registration failed') + '</span>';
+        }
+    })
+    .catch(err => console.error(err));
+}
+
+function userLogout() {
+    fetch('/logout', {method: 'POST'})
+    .then(() => {
+        currentUser = null;
+        document.getElementById('userGreeting').innerHTML = '';
+        notify('Logged out successfully', 'success');
+    });
+}
+
+function loadSavedResults() {
+    if (!currentUser) return;
+    fetch('/api/get_user_results')
+    .then(res => res.json())
+    .then(results => {
+        if (results.length) {
+            // Show a dropdown or list of saved results – you can implement this
+            console.log('Saved results:', results);
+            // For now, just notify
+            notify(`You have ${results.length} saved calculation(s).`, 'success');
+        }
+    });
+}
+
+// Auto‑save result when calculation is performed (only if logged in)
+function saveCurrentResult(grades, cp, qualified) {
+    if (!currentUser) return;
+    fetch('/api/save_user_result', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({grades: grades, cluster_points: cp, qualified: qualified})
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'ok') console.log('Result saved');
+    });
 }
 
 function notify(m, t) {
