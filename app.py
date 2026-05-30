@@ -799,7 +799,64 @@ H = '''<!DOCTYPE html>
         <button class="btn btn-calc" onclick="searchScholarships()" style="background:linear-gradient(135deg, #ff8c00, #ff2e00);">🔍 Find Scholarships</button>
         <div id="scholarResults" style="margin-top:15px;"></div>
     </div>
-    
+   
+   <!-- TESTIMONIALS & FOUNDER STORY SECTION -->
+<div class="card" style="margin-top: 30px;">
+    <!-- Founder Story -->
+    <div style="text-align: center;">
+        <span style="font-size: 3em;">👨‍💻</span>
+        <h2 style="color: var(--cyan); margin: 10px 0;">Meet the Founder</h2>
+        <p style="color: var(--purple); font-weight: bold;">Brian Ondieki – Founder & Developer, EduPoint</p>
+        <div style="background: rgba(0,229,255,0.05); padding: 20px; border-radius: 16px; margin: 15px 0;">
+            <p style="font-style: italic; color: var(--text2);">"As a student, I saw many learners struggle to choose the right university courses and understand KUCCPS requirements. I created EduPoint to simplify that journey by providing accurate cluster point calculations, course guidance, university information, and AI-powered educational support. My goal is to help every student make informed decisions about their future."</p>
+        </div>
+    </div>
+
+    <!-- What Drives EduPoint -->
+    <div style="margin: 20px 0;">
+        <h3 style="color: var(--cyan);">🌟 What Drives EduPoint</h3>
+        <div style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 10px;">
+            <div class="stat-card" style="flex: 1; min-width: 180px;">🎯 Helping students discover suitable courses</div>
+            <div class="stat-card" style="flex: 1; min-width: 180px;">📚 Simplifying university admissions information</div>
+            <div class="stat-card" style="flex: 1; min-width: 180px;">🔍 Providing reliable educational guidance</div>
+            <div class="stat-card" style="flex: 1; min-width: 180px;">🤖 Using technology and AI to improve career planning</div>
+        </div>
+    </div>
+
+    <!-- Testimonials -->
+    <div style="margin: 20px 0;">
+        <h3 style="color: var(--cyan);">⭐ What Students Say</h3>
+        <div style="display: flex; flex-wrap: wrap; gap: 16px; margin-top: 10px;">
+            <div class="testimonial-card" style="flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 15px;">
+                <div style="color: var(--yellow); font-size: 1.2em;">★★★★★</div>
+                <p style="color: var(--text2); margin: 8px 0;">"EduPoint helped me identify courses that matched my cluster points and interests. The guidance was clear and easy to understand."</p>
+                <p style="color: var(--cyan); font-weight: bold;">— Student, Nairobi</p>
+            </div>
+            <div class="testimonial-card" style="flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 15px;">
+                <div style="color: var(--yellow); font-size: 1.2em;">★★★★★</div>
+                <p style="color: var(--text2); margin: 8px 0;">"The cluster point calculator saved me hours of research. I was able to compare different options quickly."</p>
+                <p style="color: var(--cyan); font-weight: bold;">— KUCCPS Applicant</p>
+            </div>
+            <div class="testimonial-card" style="flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 15px;">
+                <div style="color: var(--yellow); font-size: 1.2em;">★★★★★</div>
+                <p style="color: var(--text2); margin: 8px 0;">"The AI guidance feature gave me confidence when selecting university courses."</p>
+                <p style="color: var(--cyan); font-weight: bold;">— Form Four Graduate</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Call to Action -->
+    <div style="text-align: center; margin-top: 25px; padding: 15px; background: linear-gradient(135deg, rgba(0,229,255,0.1), rgba(179,71,234,0.1)); border-radius: 16px;">
+        <h3 style="color: var(--yellow);">📢 Join Thousands of Students</h3>
+        <p style="color: var(--text2); margin-bottom: 15px;">Ready to explore your options?</p>
+        <div style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: center;">
+            <button class="btn btn-calc" onclick="document.getElementById('calcBtn').click();" style="width: auto; padding: 8px 20px;">📊 Calculate Cluster Points</button>
+            <button class="btn btn-calc" onclick="document.getElementById('calcBtn').click();" style="width: auto; padding: 8px 20px;">🎓 Check Course Eligibility</button>
+            <button class="btn btn-calc" onclick="document.getElementById('careerBtn')?.click() || document.querySelector('.sort-btn')?.click();" style="width: auto; padding: 8px 20px;">🤖 Get AI Career Guidance</button>
+        </div>
+    </div>
+</div>
+
     <!-- REFER A FRIEND -->
     <div class="refer-card" id="referCard" style="display:none;">
         <h4>👥 Invite Your Friends & Earn!</h4>
