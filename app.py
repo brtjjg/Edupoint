@@ -906,6 +906,16 @@ H = '''<!DOCTYPE html>
         </div>
     </div>
 </div>
+ 
+       <div class="footer">
+    <p>© 2026 <b>EduPoint AI v10.0</b> • All Rights Reserved</p>
+    <p style="margin-top:8px;">
+        <a href="/about" style="color:var(--cyan); text-decoration:none;">About Us</a> | 
+        <a href="/rules" style="color:var(--cyan); text-decoration:none;">Rules</a> |
+        <a href="/terms" style="color:var(--cyan); text-decoration:none;">Terms</a> | 
+        <a href="/privacy" style="color:var(--cyan); text-decoration:none;">Privacy</a>
+    </p>
+</div>
 
 <!-- PAYMENT PAGE (premium features) -->
 <div id="paymentPage" style="display:none; min-height:100vh; align-items:center; justify-content:center; padding:20px;">
