@@ -9,15 +9,8 @@ from flask import Flask, request, jsonify, render_template
 import json, os
 import json
 import os
-from werkzeug.security import generate_password_hash, check_password_hash
-from flask import session
-from twilio.rest import Client
-import random
-
-def get_twilio_client():
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-change-this')
 app.secret_key = os.urandom(24)
 
 W = {'A':12,'A-':11,'B+':10,'B':9,'B-':8,'C+':7,'C':6,'C-':5,'D+':4,'D':3,'D-':2,'E':1}
@@ -453,6 +446,22 @@ def privacy():
             <h2>5. Third-Party Links</h2>
             <p>Our site links to external websites (scholarships, WhatsApp, social media). We are not responsible for their privacy practices.</p>
             
+            <h2>6. Your Rights</h2>
+            <p>You may request deletion of any personal data we hold by contacting us below.</p>
+            
+            <h2>7. Changes to This Policy</h2>
+            <p>We may update this policy. Continued use constitutes acceptance.</p>
+            
+            <h2>8. Contact Us</h2>
+            <p>Email: <a href="mailto:academichelpdesk1@gmail.com">academichelpdesk1@gmail.com</a></p>
+            
+            <a href="/" class="back-link">← Back to Home</a>
+        </div>
+    </body>
+    </html>
+    '''
+
+
 @app.route('/api/ai', methods=['POST'])
 def ai():
     cp = request.get_json().get('cp', 0)
@@ -463,74 +472,6 @@ def ai():
     elif cp >= 25: l,a,p = "FAIR","💪 Fair.",["BA","Business","Agriculture"]
     else: l,a,p = "BUILDING","🎯 Certificate/Diploma.",["Certificate","Diploma","Artisan"]
     return jsonify({"l":l,"a":a,"p":p})
-
-@app.route('/register', methods=['POST'])
-def register():
-    data = request.json
-    username = data.get('username')
-    email = data.get('email')
-    phone = data.get('phone')
-    password = data.get('password')
-    if not username or not password:
-        return jsonify({'error': 'Username and password required'}), 400
-    hashed = generate_password_hash(password)
-    with get_db() as db:
-        try:
-            db.execute('INSERT INTO users (username, email, phone, password_hash, created_at) VALUES (?, ?, ?, ?, ?)',
-                       (username, email, phone, hashed, datetime.now().isoformat()))
-            db.commit()
-            user_id = db.execute('SELECT last_insert_rowid()').fetchone()[0]
-            session['user_id'] = user_id
-            session['username'] = username
-            return jsonify({'status': 'ok', 'user_id': user_id})
-        except Exception as e:
-            return jsonify({'error': 'Username or email already exists'}), 400
-
-@app.route('/login', methods=['POST'])
-def login():
-    data = request.json
-    identifier = data.get('identifier')  # username, email, or phone
-    password = data.get('password')
-    with get_db() as db:
-        user = db.execute('SELECT * FROM users WHERE username=? OR email=? OR phone=?', 
-                          (identifier, identifier, identifier)).fetchone()
-        if user and check_password_hash(user['password_hash'], password):
-            session['user_id'] = user['id']
-            session['username'] = user['username']
-            return jsonify({'status': 'ok', 'username': user['username']})
-        else:
-            return jsonify({'error': 'Invalid credentials'}), 401
-
-@app.route('/logout', methods=['POST'])
-def logout():
-    session.pop('user_id', None)
-    session.pop('username', None)
-    return jsonify({'status': 'ok'})
-
-@app.route('/api/save_user_result', methods=['POST'])
-def save_user_result():
-    if 'user_id' not in session:
-        return jsonify({'error': 'Not logged in'}), 401
-    data = request.json
-    grades = data.get('grades')
-    cluster_points = data.get('cluster_points')
-    qualified = data.get('qualified')
-    with get_db() as db:
-        db.execute('''
-            INSERT INTO user_saved_results (user_id, grades, cluster_points, qualified_courses, created_at)
-            VALUES (?, ?, ?, ?, ?)
-        ''', (session['user_id'], json.dumps(grades), cluster_points, json.dumps(qualified), datetime.now().isoformat()))
-        db.commit()
-    return jsonify({'status': 'ok'})
-
-@app.route('/api/get_user_results', methods=['GET'])
-def get_user_results():
-    if 'user_id' not in session:
-        return jsonify({'error': 'Not logged in'}), 401
-    with get_db() as db:
-        rows = db.execute('SELECT * FROM user_saved_results WHERE user_id=? ORDER BY created_at DESC', (session['user_id'],)).fetchall()
-    results = [dict(row) for row in rows]
-    return jsonify(results)
 
 @app.route('/api/career-advisor', methods=['POST'])
 def career_advisor():
@@ -652,82 +593,6 @@ def chatbot():
             answer = "I'm still learning. Please ask about cluster points, course cutoffs, scholarships, or use the calculator above."
     
     return jsonify({"response": answer})
-
-@app.route('/send-phone-otp', methods=['POST'])
-def send_phone_otp():
-    if 'user_id' not in session:
-        return jsonify({'error': 'Not logged in'}), 401
-    data = request.json
-    phone = data.get('phone')
-    if not phone:
-        return jsonify({'error': 'Phone number required'}), 400
-    # Generate 6-digit OTP
-    otp = str(random.randint(100000, 999999))
-    expiry = (datetime.now() + timedelta(minutes=10)).isoformat()
-    with get_db() as db:
-        db.execute('UPDATE users SET phone_otp = ?, phone_otp_expiry = ? WHERE id = ?',
-                   (otp, expiry, session['user_id']))
-        db.commit()
-    # Send via Twilio
-    try:
-        client = get_twilio_client()
-        client.messages.create(
-            body=f'EduPoint verification code: {otp}',
-            from_=os.environ.get('TWILIO_PHONE_NUMBER'),
-            to=phone
-        )
-        return jsonify({'status': 'ok', 'message': 'OTP sent'})
-    except Exception as e:
-        print(f"Twilio error: {e}")
-        return jsonify({'error': 'Failed to send SMS. Check phone number or Twilio trial limits.'}), 500
-
-@app.route('/verify-phone-otp', methods=['POST'])
-def verify_phone_otp():
-    if 'user_id' not in session:
-        return jsonify({'error': 'Not logged in'}), 401
-    data = request.json
-    otp = data.get('otp')
-    if not otp:
-        return jsonify({'error': 'OTP required'}), 400
-    with get_db() as db:
-        user = db.execute('SELECT phone_otp, phone_otp_expiry FROM users WHERE id = ?', (session['user_id'],)).fetchone()
-        if not user or not user['phone_otp'] or user['phone_otp_expiry'] < datetime.now().isoformat():
-            return jsonify({'error': 'OTP expired or not requested'}), 400
-        if user['phone_otp'] != otp:
-            return jsonify({'error': 'Invalid OTP'}), 400
-        db.execute('UPDATE users SET phone_verified = 1, phone_otp = NULL, phone_otp_expiry = NULL WHERE id = ?', (session['user_id'],))
-        db.commit()
-        return jsonify({'status': 'ok', 'message': 'Phone number verified'})
-
-@app.route('/login', methods=['POST'])
-def login():
-    data = request.json
-    identifier = data.get('identifier')
-    password = data.get('password')
-    print(f"Login attempt: identifier={identifier}, password={password}")   # debug
-    with get_db() as db:
-        user = db.execute('SELECT * FROM users WHERE username=? OR email=? OR phone=?', 
-                          (identifier, identifier, identifier)).fetchone()
-        print(f"User found: {user}")   # debug
-        if user:
-            print(f"Stored hash: {user['password_hash']}")
-            print(f"Password check: {check_password_hash(user['password_hash'], password)}")
-        if user and check_password_hash(user['password_hash'], password):
-            session['user_id'] = user['id']
-            session['username'] = user['username']
-            return jsonify({'status': 'ok', 'username': user['username']})
-        else:
-            return jsonify({'error': 'Invalid credentials'}), 401
-
-@app.route('/api/user', methods=['GET'])
-def api_user():
-    if 'user_id' not in session:
-        return jsonify({'error': 'Not logged in'}), 401
-    with get_db() as db:
-        user = db.execute('SELECT username, email, phone, phone_verified FROM users WHERE id = ?', (session['user_id'],)).fetchone()
-        if not user:
-            return jsonify({'error': 'User not found'}), 404
-        return jsonify(dict(user))
 
 H = '''<!DOCTYPE html>
 <html lang="en">
@@ -858,43 +723,9 @@ H = '''<!DOCTYPE html>
         <p style="font-size:.8em; color:var(--text2);">Enter your M-PESA phone number to receive STK Push</p>
         <input type="tel" id="payPhone" placeholder="07XX XXX XXX" style="width:100%; margin:10px 0;">
         
-       <!-- Login Modal -->
-<div id="loginModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; align-items:center; justify-content:center;">
-    <div style="background:var(--card); max-width:400px; width:90%; border-radius:20px; padding:20px;">
-        <h3 style="color:var(--cyan);">Login to Your Account</h3>
-        <input type="text" id="loginIdentifier" placeholder="Username / Email / Phone" style="width:100%; margin:10px 0;">
-        <input type="password" id="loginPassword" placeholder="Password" style="width:100%; margin:10px 0;">
-        <button class="btn btn-calc" onclick="userLogin()">Login</button>
-        <p style="margin-top:10px;">Don't have an account? <a href="#" onclick="showRegisterModal()">Register here</a></p>
-        <button class="btn btn-outline" onclick="closeLoginModal()">Cancel</button>
-        <div id="loginStatus"></div>
-    </div>
-</div>
-
-<!-- Register Modal -->
-<div id="registerModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; align-items:center; justify-content:center;">
-    <div style="background:var(--card); max-width:400px; width:90%; border-radius:20px; padding:20px;">
-        <h3 style="color:var(--cyan);">Create an Account</h3>
-        <input type="text" id="regUsername" placeholder="Username" style="width:100%; margin:10px 0;">
-        <input type="email" id="regEmail" placeholder="Email (optional)" style="width:100%; margin:10px 0;">
-        <input type="tel" id="regPhone" placeholder="Phone (optional)" style="width:100%; margin:10px 0;">
-        <input type="password" id="regPassword" placeholder="Password" style="width:100%; margin:10px 0;">
-        <button class="btn btn-calc" onclick="userRegister()">Register</button>
-        <p style="margin-top:10px;">Already have an account? <a href="#" onclick="showLoginModal()">Login here</a></p>
-        <button class="btn btn-outline" onclick="closeRegisterModal()">Cancel</button>
-        <div id="registerStatus"></div>
-    </div>
-</div>
-
-<!-- Button to open login/register (optional – add a "My Account" button) -->
-<div style="text-align:center; margin-top:10px;">
-    <button class="btn btn-outline" onclick="showLoginModal()" id="accountBtn">👤 My Account</button>
-    <span id="userGreeting" style="color:var(--green); margin-left:10px;"></span>
-</div>
-
         <!-- Terms & Privacy checkbox -->
         <div style="margin:15px 0; text-align:left;">
-            <label >
+            <label>
                 <input type="checkbox" id="agreeTerms" required>
                 I agree to the <a href="/terms" target="_blank" style="color:var(--cyan);">Terms & Conditions</a> and
                 <a href="/privacy" target="_blank" style="color:var(--cyan);">Privacy Policy</a>
@@ -914,20 +745,6 @@ H = '''<!DOCTYPE html>
         <p style="color:var(--text2);font-size:.8em;">Academic Helpdesk • KUCCPS Platform</p>
     </div>
     
-    <!-- Phone verification UI (shown only when logged in and phone not verified) -->
-<div id="phoneVerifyCard" class="card" style="display:none;">
-    <h3>📱 Verify Your Phone Number</h3>
-    <div id="phoneStep1">
-        <input type="tel" id="verifyPhone" placeholder="+2547XXXXXXXX" style="width:100%; margin-bottom:10px;">
-        <button class="btn btn-outline" onclick="sendPhoneOTP()">Send OTP</button>
-    </div>
-    <div id="phoneStep2" style="display:none;">
-        <input type="text" id="verifyOTP" placeholder="Enter 6-digit code" style="width:100%; margin-bottom:10px;">
-        <button class="btn btn-outline" onclick="verifyPhoneOTP()">Verify OTP</button>
-    </div>
-    <div id="phoneVerifyStatus"></div>
-</div>
-
     <!-- CALCULATOR -->
     <div class="card">
         <h3>📋 Enter Your 7 KCSE Subjects</h3>
@@ -982,64 +799,7 @@ H = '''<!DOCTYPE html>
         <button class="btn btn-calc" onclick="searchScholarships()" style="background:linear-gradient(135deg, #ff8c00, #ff2e00);">🔍 Find Scholarships</button>
         <div id="scholarResults" style="margin-top:15px;"></div>
     </div>
-   
-   <!-- TESTIMONIALS & FOUNDER STORY SECTION -->
-<div class="card" style="margin-top: 30px;">
-    <!-- Founder Story -->
-    <div style="text-align: center;">
-        <span style="font-size: 3em;">👨‍💻</span>
-        <h2 style="color: var(--cyan); margin: 10px 0;">Meet the Founder</h2>
-        <p style="color: var(--purple); font-weight: bold;">Brian Ondieki – Founder & Developer, EduPoint</p>
-        <div style="background: rgba(0,229,255,0.05); padding: 20px; border-radius: 16px; margin: 15px 0;">
-            <p style="font-style: italic; color: var(--text2);">"As a student, I saw many learners struggle to choose the right university courses and understand KUCCPS requirements. I created EduPoint to simplify that journey by providing accurate cluster point calculations, course guidance, university information, and AI-powered educational support. My goal is to help every student make informed decisions about their future."</p>
-        </div>
-    </div>
-
-    <!-- What Drives EduPoint -->
-    <div style="margin: 20px 0;">
-        <h3 style="color: var(--cyan);">🌟 What Drives EduPoint</h3>
-        <div style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 10px;">
-            <div class="stat-card" style="flex: 1; min-width: 180px;">🎯 Helping students discover suitable courses</div>
-            <div class="stat-card" style="flex: 1; min-width: 180px;">📚 Simplifying university admissions information</div>
-            <div class="stat-card" style="flex: 1; min-width: 180px;">🔍 Providing reliable educational guidance</div>
-            <div class="stat-card" style="flex: 1; min-width: 180px;">🤖 Using technology and AI to improve career planning</div>
-        </div>
-    </div>
-
-    <!-- Testimonials -->
-    <div style="margin: 20px 0;">
-        <h3 style="color: var(--cyan);">⭐ What Students Say</h3>
-        <div style="display: flex; flex-wrap: wrap; gap: 16px; margin-top: 10px;">
-            <div class="testimonial-card" style="flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 15px;">
-                <div style="color: var(--yellow); font-size: 1.2em;">★★★★★</div>
-                <p style="color: var(--text2); margin: 8px 0;">"EduPoint helped me identify courses that matched my cluster points and interests. The guidance was clear and easy to understand."</p>
-                <p style="color: var(--cyan); font-weight: bold;">— Student, Nairobi</p>
-            </div>
-            <div class="testimonial-card" style="flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 15px;">
-                <div style="color: var(--yellow); font-size: 1.2em;">★★★★★</div>
-                <p style="color: var(--text2); margin: 8px 0;">"The cluster point calculator saved me hours of research. I was able to compare different options quickly."</p>
-                <p style="color: var(--cyan); font-weight: bold;">— KUCCPS Applicant</p>
-            </div>
-            <div class="testimonial-card" style="flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 15px;">
-                <div style="color: var(--yellow); font-size: 1.2em;">★★★★★</div>
-                <p style="color: var(--text2); margin: 8px 0;">"The AI guidance feature gave me confidence when selecting university courses."</p>
-                <p style="color: var(--cyan); font-weight: bold;">— Form Four Graduate</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Call to Action -->
-    <div style="text-align: center; margin-top: 25px; padding: 15px; background: linear-gradient(135deg, rgba(0,229,255,0.1), rgba(179,71,234,0.1)); border-radius: 16px;">
-        <h3 style="color: var(--yellow);">📢 Join Thousands of Students</h3>
-        <p style="color: var(--text2); margin-bottom: 15px;">Ready to explore your options?</p>
-        <div style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: center;">
-            <button class="btn btn-calc" onclick="document.getElementById('calcBtn').click();" style="width: auto; padding: 8px 20px;">📊 Calculate Cluster Points</button>
-            <button class="btn btn-calc" onclick="document.getElementById('calcBtn').click();" style="width: auto; padding: 8px 20px;">🎓 Check Course Eligibility</button>
-            <button class="btn btn-calc" onclick="document.getElementById('careerBtn')?.click() || document.querySelector('.sort-btn')?.click();" style="width: auto; padding: 8px 20px;">🤖 Get AI Career Guidance</button>
-        </div>
-    </div>
-</div>
-
+    
     <!-- REFER A FRIEND -->
     <div class="refer-card" id="referCard" style="display:none;">
         <h4>👥 Invite Your Friends & Earn!</h4>
@@ -1087,68 +847,22 @@ H = '''<!DOCTYPE html>
         </p>
     </div>
     
-    <!-- FOUNDER - Collapsible (appears on every page) -->
-<div class="founder-card" style="margin-top: 30px;">
-    <div style="text-align: center;">
-        <img src="https://via.placeholder.com/100?text=Mr.Nex" alt="Mr. Nex" style="width: 100px; height: 100px; border-radius: 50%; border: 3px solid var(--cyan); margin-bottom: 10px;">
-        <h2 style="color: var(--cyan); margin-bottom: 5px;">Brian Ondieki (Mr. Nex)</h2>
-        <p style="color: var(--purple); font-weight: bold;">Founder & Lead Developer</p>
-        <p style="color: var(--text2); font-style: italic;">Building AI-powered educational solutions for students.</p>
-        <button id="toggleFounderBtn" class="btn btn-outline" style="margin-top: 10px; width: auto; padding: 6px 20px;">📖 View Full Profile</button>
-    </div>
-    <div id="founderDetails" style="display: none; margin-top: 20px; border-top: 1px solid var(--border); padding-top: 20px;">
-        <!-- Social links -->
-        <div style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-bottom: 20px;">
-            <a href="https://github.com/brtjjg" target="_blank" class="social-icon" style="background:#333; color:white;">🐙 GitHub</a>
-            <a href="https://linkedin.com/in/yourprofile" target="_blank" class="social-icon" style="background:#0077b5; color:white;">🔗 LinkedIn</a>
-            <a href="https://facebook.com/yourpage" target="_blank" class="social-icon" style="background:#1877f2; color:white;">📘 Facebook</a>
-            <a href="https://twitter.com/yourhandle" target="_blank" class="social-icon" style="background:#1DA1F2; color:white;">🐦 Twitter</a>
-            <a href="mailto:nexo27716@gmail.com" class="social-icon" style="background:#ea4335; color:white;">✉️ Email</a>
-        </div>
-        <!-- About -->
-        <div style="background: rgba(0,229,255,0.05); padding: 15px; border-radius: 16px; margin: 15px 0;">
-            <h3 style="color: var(--cyan);">📖 About Me</h3>
-            <p style="color: var(--text2); line-height: 1.6;">I am a software developer passionate about educational technology, artificial intelligence, web applications, and mobile app development. My goal is to create innovative solutions that help students access information, make better career decisions, and succeed academically.</p>
-        </div>
-        <!-- Skills -->
-        <div style="margin: 15px 0;">
-            <h3 style="color: var(--cyan);">⚙️ Skills</h3>
-            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-                <span class="badge bg-green">Python</span><span class="badge bg-green">Flask</span><span class="badge bg-green">Firebase</span><span class="badge bg-green">AI Development</span><span class="badge bg-green">Android Apps</span><span class="badge bg-green">HTML/CSS</span><span class="badge bg-green">JavaScript</span><span class="badge bg-green">Git & GitHub</span>
-            </div>
-        </div>
-        <!-- Services -->
-        <div style="margin: 15px 0;">
-            <h3 style="color: var(--cyan);">💼 Services I Offer</h3>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap: 10px;">
-                <div class="stat-card">💻 Website Development</div><div class="stat-card">📱 Mobile App Development</div><div class="stat-card">🤖 AI Chatbot Development</div><div class="stat-card">🎓 Educational Platforms</div><div class="stat-card">💳 M-PESA Integration</div><div class="stat-card">☁️ Hosting & Deployment</div>
-            </div>
-        </div>
-        <!-- Projects -->
-        <div style="margin: 15px 0;">
-            <h3 style="color: var(--cyan);">🚀 Current Projects</h3>
-            <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">
-                <span class="badge bg-yellow">EduPoint AI</span><span class="badge bg-yellow">KUCCPS Assistant</span><span class="badge bg-yellow">Engineering Learning App</span><span class="badge bg-yellow">Scholarship Finder</span>
-            </div>
-        </div>
-        <!-- Mission -->
-        <div style="background: linear-gradient(135deg, rgba(0,229,255,0.1), rgba(179,71,234,0.1)); padding: 15px; border-radius: 16px; margin: 15px 0; text-align: center;">
-            <p style="font-size: 1.1em; font-weight: bold; color: var(--yellow);">🌟 My Mission</p>
-            <p style="color: var(--text2);">To use technology to simplify education, career guidance, and access to opportunities for students across Kenya and Africa.</p>
-        </div>
-        <!-- Contact Buttons -->
-        <div style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 20px;">
-            <a href="mailto:nexo27716@gmail.com" class="btn btn-calc" style="width: auto; padding: 8px 20px;">📧 Email Me</a>
-            <a href="mailto:nexo27716@gmail.com?subject=Hiring%20Inquiry&body=Hello%20Mr.%20Nex,%20I%20am%20interested%20in%20hiring%20you." class="btn btn-calc" style="width: auto; background: var(--purple); padding: 8px 20px;">💼 Hire Me</a>
-            <a href="mailto:nexo27716@gmail.com?subject=Partnership%20Request&body=Dear%20Mr.%20Nex,%20I%20would%20like%20to%20discuss%20a%20partnership." class="btn btn-outline" style="width: auto; padding: 8px 20px;">🤝 Partnership Request</a>
-            <a href="https://wa.me/254114812308?text=Hello%20Mr.%20Nex,%20I%20saw%20your%20website." target="_blank" class="btn btn-wa" style="width: auto; padding: 8px 20px;">📱 WhatsApp</a>
+    <!-- FOUNDER -->
+    <div class="founder-card">
+        <div style="font-size:2.5em;">👨‍💻</div>
+        <h3 style="color:var(--cyan);margin:8px 0;">Founder & CEO</h3>
+        <h2 style="font-size:1.4em;">Mr. Nex</h2>
+        <p style="color:var(--text2);">Full Stack Developer • AI Systems Engineer</p>
+        <div class="contact-row">
+            <a href="tel:0114812308" class="contact-btn" style="background:var(--card);border:1px solid var(--cyan);color:var(--cyan);">📞 Call</a>
+            <a href="mailto:nexo27716@gmail.com" class="contact-btn" style="background:var(--card);border:1px solid var(--purple);color:var(--purple);">✉️ Email</a>
+            <a href="https://wa.me/254114812308" target="_blank" class="contact-btn" style="background:var(--wa);color:#fff;">💬 WhatsApp</a>
         </div>
     </div>
-</div>
-
-<!-- Copyright Footer (visible on all pages) -->
-<div style="text-align: center; padding: 20px; margin-top: 30px; border-top: 1px solid var(--border); font-size: 0.8em; color: var(--text3);">
-    <p>© 2026 EduPoint AI. All Rights Reserved.</p>
+    
+    <div class="footer">
+        <p>© 2026 <b>EduPoint AI v10.0</b> • All Rights Reserved</p>
+    </div>
 </div>
 
 <a href="https://chat.whatsapp.com/CQB9ZfYe9B683p6Df35YCG" target="_blank" class="wa-float">💬</a>
@@ -1159,62 +873,6 @@ var S = ''' + json.dumps(S) + ''';
 var G = ''' + json.dumps(G) + ''';
 var pts = null, qd = [], st = null;
 var previewGrades = {};
-
-// Phone verification functions
-function sendPhoneOTP() {
-    let phone = document.getElementById('verifyPhone').value;
-    if (!phone) {
-        alert("Enter phone number in international format, e.g., +2547XXXXXXXX");
-        return;
-    }
-    fetch('/send-phone-otp', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({phone: phone})
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.status === 'ok') {
-            document.getElementById('phoneStep1').style.display = 'none';
-            document.getElementById('phoneStep2').style.display = 'block';
-            document.getElementById('phoneVerifyStatus').innerHTML = '<span style="color:green;">OTP sent! Enter the code you received.</span>';
-        } else {
-            document.getElementById('phoneVerifyStatus').innerHTML = '<span style="color:red;">' + (data.error || 'Failed to send OTP') + '</span>';
-        }
-    })
-    .catch(err => {
-        document.getElementById('phoneVerifyStatus').innerHTML = '<span style="color:red;">Network error. Try again.</span>';
-    });
-}
-
-function verifyPhoneOTP() {
-    let otp = document.getElementById('verifyOTP').value;
-    if (!otp) return;
-    fetch('/verify-phone-otp', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({otp: otp})
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.status === 'ok') {
-            document.getElementById('phoneVerifyStatus').innerHTML = '<span style="color:green;">✅ Phone number verified! You will now receive important updates.</span>';
-            document.getElementById('phoneStep2').style.display = 'none';
-            document.getElementById('phoneVerifyCard').style.display = 'none'; // hide card after success
-        } else {
-            document.getElementById('phoneVerifyStatus').innerHTML = '<span style="color:red;">' + (data.error || 'Invalid OTP') + '</span>';
-        }
-    });
-}
-fetch('/api/user')
-    .then(res => res.json())
-    .then(user => {
-        if (!user.phone_verified) {
-            document.getElementById('phoneVerifyCard').style.display = 'block';
-        }
-    });
-// After login, check if phone is already verified (you need an endpoint for that)
-// We'll skip for brevity; you can add a simple /api/user endpoint that returns user details including phone_verified.
 
 function buildPreview() {
     var h = '';
@@ -1339,13 +997,7 @@ function calc() {
         document.getElementById('spinner').classList.remove('show');
         document.getElementById('referCard').style.display = 'block';
         notify('✅ Points: '+pts.toFixed(3), 'success');
-       // If user is logged in, save this result
-
     });
-// If user is logged in, save this result
-if (currentUser) {
-    saveCurrentResult(gr, pts, d.q);
-}
 }
 
 function showR(d) {
@@ -1518,118 +1170,6 @@ function quickQuestion(question) {
     sendChatMessage();
 }
 
-// Global variable to track login status
-let currentUser = null;
-
-function showLoginModal() {
-    document.getElementById('loginModal').style.display = 'flex';
-}
-function closeLoginModal() {
-    document.getElementById('loginModal').style.display = 'none';
-    document.getElementById('loginStatus').innerHTML = '';
-}
-function showRegisterModal() {
-    closeLoginModal();
-    document.getElementById('registerModal').style.display = 'flex';
-}
-function closeRegisterModal() {
-    document.getElementById('registerModal').style.display = 'none';
-    document.getElementById('registerStatus').innerHTML = '';
-}
-
-function userLogin() {
-    let identifier = document.getElementById('loginIdentifier').value;
-    let password = document.getElementById('loginPassword').value;
-    if (!identifier || !password) {
-        document.getElementById('loginStatus').innerHTML = '<span style="color:red;">All fields required</span>';
-        return;
-    }
-    fetch('/login', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({identifier, password})
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.status === 'ok') {
-            currentUser = data.username;
-            document.getElementById('userGreeting').innerHTML = `Welcome, ${currentUser} | <a href="#" onclick="userLogout()">Logout</a>`;
-            closeLoginModal();
-            notify('Login successful!', 'success');
-            // Optionally, load saved results
-            loadSavedResults();
-        } else {
-            document.getElementById('loginStatus').innerHTML = '<span style="color:red;">' + (data.error || 'Login failed') + '</span>';
-        }
-    })
-    .catch(err => console.error(err));
-}
-
-function userRegister() {
-    let username = document.getElementById('regUsername').value;
-    let email = document.getElementById('regEmail').value;
-    let phone = document.getElementById('regPhone').value;
-    let password = document.getElementById('regPassword').value;
-    if (!username || !password) {
-        document.getElementById('registerStatus').innerHTML = '<span style="color:red;">Username and password required</span>';
-        return;
-    }
-    fetch('/register', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({username, email, phone, password})
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.status === 'ok') {
-            currentUser = username;
-            document.getElementById('userGreeting').innerHTML = `Welcome, ${currentUser} | <a href="#" onclick="userLogout()">Logout</a>`;
-            closeRegisterModal();
-            notify('Registration successful! You are now logged in.', 'success');
-        } else {
-            document.getElementById('registerStatus').innerHTML = '<span style="color:red;">' + (data.error || 'Registration failed') + '</span>';
-        }
-    })
-    .catch(err => console.error(err));
-}
-
-function userLogout() {
-    fetch('/logout', {method: 'POST'})
-    .then(() => {
-        currentUser = null;
-        document.getElementById('userGreeting').innerHTML = '';
-        notify('Logged out successfully', 'success');
-    });
-}
-
-function loadSavedResults() {
-    if (!currentUser) return;
-    fetch('/api/get_user_results')
-    .then(res => res.json())
-    .then(results => {
-        if (results.length) {
-            // Show a dropdown or list of saved results – you can implement this
-            console.log('Saved results:', results);
-            // For now, just notify
-            notify(`You have ${results.length} saved calculation(s).`, 'success');
-        }
-    });
-}
-
-// Auto‑save result when calculation is performed (only if logged in)
-function saveCurrentResult(grades, cp, qualified) {
-    if (!currentUser) return;
-    fetch('/api/save_user_result', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({grades: grades, cluster_points: cp, qualified: qualified})
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.status === 'ok') console.log('Result saved');
-    });
-}
-
 function notify(m, t) {
     var n = document.getElementById('notif');
     n.className = 'notif notif-' + t;
@@ -1637,23 +1177,6 @@ function notify(m, t) {
     n.style.display = 'block';
     setTimeout(function() { n.style.display = 'none'; }, 4000);
 }
-
-// Toggle founder details (inside the existing <script>)
-document.addEventListener('DOMContentLoaded', function() {
-    var btn = document.getElementById('toggleFounderBtn');
-    var details = document.getElementById('founderDetails');
-    if (btn && details) {
-        btn.addEventListener('click', function() {
-            if (details.style.display === 'none') {
-                details.style.display = 'block';
-                btn.innerHTML = '✖ Show Less';
-            } else {
-                details.style.display = 'none';
-                btn.innerHTML = '📖 View Full Profile';
-            }
-        });
-    }
-});
 
 // Initialize
 buildPreview();
