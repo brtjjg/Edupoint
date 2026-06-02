@@ -460,7 +460,121 @@ def privacy():
     </body>
     </html>
     '''
+@app.route('/rules')
+def rules():
+    return '''<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rules & Regulations – EduPoint</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #0a0a14;
+            color: #e0e0ff;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background: #12122a;
+            padding: 30px;
+            border-radius: 16px;
+            border: 1px solid #1e1e3a;
+        }
+        h1, h2 {
+            color: #00e5ff;
+        }
+        h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        h2 {
+            font-size: 1.4em;
+            margin-top: 20px;
+        }
+        a {
+            color: #00ff88;
+            text-decoration: none;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: #00e5ff;
+            color: #000;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        hr {
+            border-color: #1e1e3a;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>📜 EduPoint Rules & Regulations</h1>
+    <p><strong>Last updated:</strong> June 2, 2026</p>
+    <hr>
 
+    <h2>1. Purpose of EduPoint</h2>
+    <p>EduPoint is an educational and career guidance platform designed to help students understand KUCCPS requirements, calculate cluster points, explore university courses, and receive career guidance. The platform must be used strictly for educational purposes only.</p>
+
+    <h2>2. User Eligibility</h2>
+    <p>By using EduPoint, you confirm that you are a student or individual seeking educational guidance, you are at least 13 years old (or using under parental guidance), and all information provided is accurate. False or misleading information may lead to suspension.</p>
+
+    <h2>3. Account Registration and Security</h2>
+    <p>Users must create only one account per person, use valid contact details, keep credentials private, and not share accounts. Users are responsible for any activity under their account.</p>
+
+    <h2>4. Acceptable Use Policy</h2>
+    <p><strong>Allowed:</strong> Learning, using calculators, AI guidance, purchasing premium reports.<br>
+    <strong>Prohibited:</strong> Illegal activities, hacking, bots, false data, spamming, or abuse of any system feature.</p>
+
+    <h2>5. Content Accuracy and Responsibility</h2>
+    <p>EduPoint provides guidance based on available data, but admission suggestions are not guarantees. Users must confirm final decisions with official KUCCPS and universities. EduPoint is not liable for user decisions.</p>
+
+    <h2>6. Premium Services (KES 100)</h2>
+    <p>Paid reports are non‑refundable once generated, for personal use only, and cannot be shared or resold. Fraudulent payment attempts will result in account termination.</p>
+
+    <h2>7. Payment and Fraud Prevention</h2>
+    <p>All payments must be via approved methods (e.g., M‑PESA). Fake transaction confirmations are prohibited. EduPoint may verify transactions before granting access.</p>
+
+    <h2>8. Email and Phone Verification</h2>
+    <p>Verification may be required for full access. Do not use fake or temporary contact details. Verified accounts may receive additional features.</p>
+
+    <h2>9. Data Usage and Privacy</h2>
+    <p>We collect limited data (email, grades, preferences) only for educational recommendations. Data is not sold. Users can request account deletion.</p>
+
+    <h2>10. System Integrity and Security</h2>
+    <p>No hacking, interference, or exploitation of bugs. EduPoint may log suspicious activity.</p>
+
+    <h2>11. Fair Usage Policy</h2>
+    <p>Excessive requests, abuse of AI tools, or data scraping may lead to throttling or restriction.</p>
+
+    <h2>12. WhatsApp Community Rules</h2>
+    <p>Be respectful, no spam, false info, or harassment. Violation may result in removal.</p>
+
+    <h2>13. Intellectual Property</h2>
+    <p>All content (software, AI systems, reports, branding) is owned by EduPoint. Do not copy or resell without permission.</p>
+
+    <h2>14. Service Availability</h2>
+    <p>We aim for continuous access, but downtime may occur for maintenance. Features may be modified without notice.</p>
+
+    <h2>15. Account Suspension and Termination</h2>
+    <p>EduPoint may suspend accounts that violate rules or engage in fraud, without prior notice if necessary.</p>
+
+    <h2>16. Updates to Rules</h2>
+    <p>These rules may be updated at any time. Continued use means acceptance of updated rules.</p>
+
+    <hr>
+    <p><strong>⚡ Final Note:</strong> EduPoint is built to support students in making informed career decisions. These rules ensure fairness, security, and trust for all users.</p>
+
+    <a href="/" class="back-link">← Back to Home</a>
+</div>
+</body>
+</html>'''
 
 @app.route('/api/ai', methods=['POST'])
 def ai():
@@ -955,8 +1069,9 @@ H = '''<!DOCTYPE html>
     <p>© 2026 <b>EduPoint AI v10.0</b> • All Rights Reserved</p>
     <p style="margin-top:8px;">
         <a href="/about" style="color:var(--cyan); text-decoration:none;">About Us</a> | 
-        <a href="/terms" style="color:var(--cyan); text-decoration:none;">Terms & Conditions</a> | 
-        <a href="/privacy" style="color:var(--cyan); text-decoration:none;">Privacy Policy</a>
+        <a href="/rules" style="color:var(--cyan); text-decoration:none;">Rules</a> |
+        <a href="/terms" style="color:var(--cyan); text-decoration:none;">Terms</a> | 
+        <a href="/privacy" style="color:var(--cyan); text-decoration:none;">Privacy</a>
     </p>
 </div>
 
