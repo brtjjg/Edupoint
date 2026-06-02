@@ -594,6 +594,97 @@ def chatbot():
     
     return jsonify({"response": answer})
 
+@app.route('/about')
+def about():
+    return '''<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About EduPoint – Your Future, Guided by AI</title>
+    <style>
+        :root{--bg:#0a0a14;--card:#12122a;--border:#1e1e3a;--cyan:#00e5ff;--purple:#b347ea;--green:#00ff88;--yellow:#ffd700;--text:#e0e0ff;--text2:#8888bb}
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);padding:20px;line-height:1.6}
+        .container{max-width:900px;margin:0 auto}
+        .card{background:var(--card);border-radius:16px;padding:30px;border:1px solid var(--border);margin-bottom:20px}
+        h1,h2{color:var(--cyan);margin-bottom:15px}
+        h1{font-size:2.2em}
+        h2{font-size:1.5em;margin-top:20px}
+        .founder-quote{background:rgba(0,229,255,0.05);border-left:4px solid var(--cyan);padding:15px;margin:20px 0}
+        .stats{display:flex;justify-content:space-between;flex-wrap:wrap;gap:15px;margin:20px 0}
+        .stat{background:rgba(0,255,136,0.05);padding:15px;border-radius:12px;flex:1;text-align:center}
+        .stat-number{font-size:2em;color:var(--green);font-weight:bold}
+        .btn{display:inline-block;background:linear-gradient(135deg,var(--cyan),var(--purple));color:#000;padding:12px 24px;border-radius:12px;text-decoration:none;font-weight:bold;margin-top:15px}
+        a{color:var(--green)}
+        .footer{text-align:center;margin-top:30px;color:var(--text2)}
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <h1>📘 About EduPoint</h1>
+        <p style="font-size:1.2em; color:var(--yellow);">Your Future, Guided by AI</p>
+        
+        <h2>🌟 Our Mission</h2>
+        <p>EduPoint is an education and career guidance platform designed to help students in Kenya make smarter decisions about their future. Our mission is to simplify KUCCPS selection, course discovery, and career planning using technology, data, and AI‑powered insights. We believe every student deserves clear, accurate, and accessible information when choosing their academic and professional path.</p>
+        
+        <h2>🚀 What EduPoint Does</h2>
+        <p>EduPoint provides tools that help students:</p>
+        <ul>
+            <li>Calculate cluster points easily</li>
+            <li>Discover suitable university courses</li>
+            <li>Compare different career paths</li>
+            <li>Check admission chances</li>
+            <li>Explore universities in Kenya</li>
+            <li>Get personalized AI career guidance</li>
+        </ul>
+        <p>We turn complex admission data into simple, understandable guidance.</p>
+        
+        <div class="founder-quote">
+            <h3>👨‍💻 The Founder</h3>
+            <p><strong>Brian Ondieki</strong> – Founder & Developer, EduPoint</p>
+            <p><em>“I built EduPoint to help students see their future more clearly. By combining data and technology, we can make education decisions easier, faster, and more accurate.”</em></p>
+            <p>EduPoint was created from a simple observation: many students struggle to understand KUCCPS requirements and end up choosing courses without clear guidance.</p>
+        </div>
+        
+        <h2>🎯 Our Vision</h2>
+        <p>To become the leading student career guidance platform in Africa, empowering learners to make informed decisions from secondary school to university and beyond.</p>
+        
+        <h2>💡 Why EduPoint Exists</h2>
+        <p>Many students face challenges like confusion during KUCCPS applications, lack of career guidance, limited access to course information, and poor understanding of cluster points. EduPoint solves these problems by providing a centralized, intelligent system for academic planning.</p>
+        
+        <div class="stats">
+            <div class="stat"><div class="stat-number">200+</div><div>Courses Analyzed</div></div>
+            <div class="stat"><div class="stat-number">30+</div><div>Universities</div></div>
+            <div class="stat"><div class="stat-number">AI-Powered</div><div>Recommendations</div></div>
+        </div>
+        
+        <h2>📊 What Makes Us Different</h2>
+        <ul>
+            <li>AI-powered career recommendations</li>
+            <li>Real‑time admission probability insights</li>
+            <li>Simple and student‑friendly tools</li>
+            <li>Kenya‑focused education data</li>
+            <li>Affordable premium reports (KES 100)</li>
+        </ul>
+        
+        <h2>🤝 Join Our Community</h2>
+        <p>We are building a community of students, educators, and career explorers. Join us and take control of your academic future.</p>
+        <a href="/" class="btn">🎓 Start Your Journey</a>
+        
+        <h2>📬 Contact Us</h2>
+        <p>For support, feedback, or partnerships:<br>
+        📧 <a href="mailto:support@edupoint.com">support@edupoint.com</a><br>
+        (Replace with your real email – currently academichelpdesk1@gmail.com)</p>
+    </div>
+    <div class="footer">
+        <a href="/" style="color:var(--cyan);">🏠 Home</a> | <a href="/terms" style="color:var(--cyan);">Terms</a> | <a href="/privacy" style="color:var(--cyan);">Privacy</a>
+    </div>
+</div>
+</body>
+</html>'''
+
 H = '''<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -861,8 +952,12 @@ H = '''<!DOCTYPE html>
     </div>
     
     <div class="footer">
-        <p>© 2026 <b>EduPoint AI v10.0</b> • All Rights Reserved</p>
-    </div>
+    <p>© 2026 <b>EduPoint AI v10.0</b> • All Rights Reserved</p>
+    <p style="margin-top:8px;">
+        <a href="/about" style="color:var(--cyan); text-decoration:none;">About Us</a> | 
+        <a href="/terms" style="color:var(--cyan); text-decoration:none;">Terms & Conditions</a> | 
+        <a href="/privacy" style="color:var(--cyan); text-decoration:none;">Privacy Policy</a>
+    </p>
 </div>
 
 <a href="https://chat.whatsapp.com/CQB9ZfYe9B683p6Df35YCG" target="_blank" class="wa-float">💬</a>
