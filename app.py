@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python3
 """
 EduPoint AI v10.0 - Complete Production
@@ -809,8 +810,8 @@ def about():
         
         <h2>📬 Contact Us</h2>
         <p>For support, feedback, or partnerships:<br>
-        📧 <a href="mailto:support@edupoint.com">support@edupoint.com</a><br>
-        (Replace with your real email – currently academichelpdesk1@gmail.com)</p>
+        📧 <a href="mailto:academichelpdesk1@gmail.com">academichelpdesk1@gmail.com</a><br>
+        </p>
     </div>
     <div class="footer">
         <a href="/" style="color:var(--cyan);">🏠 Home</a> | <a href="/terms" style="color:var(--cyan);">Terms</a> | <a href="/privacy" style="color:var(--cyan);">Privacy</a>
