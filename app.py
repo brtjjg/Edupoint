@@ -11,6 +11,10 @@ import json
 import os
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import session
+from twilio.rest import Client
+import random
+
+def get_twilio_client():
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-change-this')
@@ -449,22 +453,6 @@ def privacy():
             <h2>5. Third-Party Links</h2>
             <p>Our site links to external websites (scholarships, WhatsApp, social media). We are not responsible for their privacy practices.</p>
             
-            <h2>6. Your Rights</h2>
-            <p>You may request deletion of any personal data we hold by contacting us below.</p>
-            
-            <h2>7. Changes to This Policy</h2>
-            <p>We may update this policy. Continued use constitutes acceptance.</p>
-            
-            <h2>8. Contact Us</h2>
-            <p>Email: <a href="mailto:academichelpdesk1@gmail.com">academichelpdesk1@gmail.com</a></p>
-            
-            <a href="/" class="back-link">← Back to Home</a>
-        </div>
-    </body>
-    </html>
-    '''
-
-
 @app.route('/api/ai', methods=['POST'])
 def ai():
     cp = request.get_json().get('cp', 0)
@@ -665,6 +653,82 @@ def chatbot():
     
     return jsonify({"response": answer})
 
+@app.route('/send-phone-otp', methods=['POST'])
+def send_phone_otp():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+    data = request.json
+    phone = data.get('phone')
+    if not phone:
+        return jsonify({'error': 'Phone number required'}), 400
+    # Generate 6-digit OTP
+    otp = str(random.randint(100000, 999999))
+    expiry = (datetime.now() + timedelta(minutes=10)).isoformat()
+    with get_db() as db:
+        db.execute('UPDATE users SET phone_otp = ?, phone_otp_expiry = ? WHERE id = ?',
+                   (otp, expiry, session['user_id']))
+        db.commit()
+    # Send via Twilio
+    try:
+        client = get_twilio_client()
+        client.messages.create(
+            body=f'EduPoint verification code: {otp}',
+            from_=os.environ.get('TWILIO_PHONE_NUMBER'),
+            to=phone
+        )
+        return jsonify({'status': 'ok', 'message': 'OTP sent'})
+    except Exception as e:
+        print(f"Twilio error: {e}")
+        return jsonify({'error': 'Failed to send SMS. Check phone number or Twilio trial limits.'}), 500
+
+@app.route('/verify-phone-otp', methods=['POST'])
+def verify_phone_otp():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+    data = request.json
+    otp = data.get('otp')
+    if not otp:
+        return jsonify({'error': 'OTP required'}), 400
+    with get_db() as db:
+        user = db.execute('SELECT phone_otp, phone_otp_expiry FROM users WHERE id = ?', (session['user_id'],)).fetchone()
+        if not user or not user['phone_otp'] or user['phone_otp_expiry'] < datetime.now().isoformat():
+            return jsonify({'error': 'OTP expired or not requested'}), 400
+        if user['phone_otp'] != otp:
+            return jsonify({'error': 'Invalid OTP'}), 400
+        db.execute('UPDATE users SET phone_verified = 1, phone_otp = NULL, phone_otp_expiry = NULL WHERE id = ?', (session['user_id'],))
+        db.commit()
+        return jsonify({'status': 'ok', 'message': 'Phone number verified'})
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.json
+    identifier = data.get('identifier')
+    password = data.get('password')
+    print(f"Login attempt: identifier={identifier}, password={password}")   # debug
+    with get_db() as db:
+        user = db.execute('SELECT * FROM users WHERE username=? OR email=? OR phone=?', 
+                          (identifier, identifier, identifier)).fetchone()
+        print(f"User found: {user}")   # debug
+        if user:
+            print(f"Stored hash: {user['password_hash']}")
+            print(f"Password check: {check_password_hash(user['password_hash'], password)}")
+        if user and check_password_hash(user['password_hash'], password):
+            session['user_id'] = user['id']
+            session['username'] = user['username']
+            return jsonify({'status': 'ok', 'username': user['username']})
+        else:
+            return jsonify({'error': 'Invalid credentials'}), 401
+
+@app.route('/api/user', methods=['GET'])
+def api_user():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+    with get_db() as db:
+        user = db.execute('SELECT username, email, phone, phone_verified FROM users WHERE id = ?', (session['user_id'],)).fetchone()
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        return jsonify(dict(user))
+
 H = '''<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -850,6 +914,20 @@ H = '''<!DOCTYPE html>
         <p style="color:var(--text2);font-size:.8em;">Academic Helpdesk • KUCCPS Platform</p>
     </div>
     
+    <!-- Phone verification UI (shown only when logged in and phone not verified) -->
+<div id="phoneVerifyCard" class="card" style="display:none;">
+    <h3>📱 Verify Your Phone Number</h3>
+    <div id="phoneStep1">
+        <input type="tel" id="verifyPhone" placeholder="+2547XXXXXXXX" style="width:100%; margin-bottom:10px;">
+        <button class="btn btn-outline" onclick="sendPhoneOTP()">Send OTP</button>
+    </div>
+    <div id="phoneStep2" style="display:none;">
+        <input type="text" id="verifyOTP" placeholder="Enter 6-digit code" style="width:100%; margin-bottom:10px;">
+        <button class="btn btn-outline" onclick="verifyPhoneOTP()">Verify OTP</button>
+    </div>
+    <div id="phoneVerifyStatus"></div>
+</div>
+
     <!-- CALCULATOR -->
     <div class="card">
         <h3>📋 Enter Your 7 KCSE Subjects</h3>
@@ -1081,6 +1159,62 @@ var S = ''' + json.dumps(S) + ''';
 var G = ''' + json.dumps(G) + ''';
 var pts = null, qd = [], st = null;
 var previewGrades = {};
+
+// Phone verification functions
+function sendPhoneOTP() {
+    let phone = document.getElementById('verifyPhone').value;
+    if (!phone) {
+        alert("Enter phone number in international format, e.g., +2547XXXXXXXX");
+        return;
+    }
+    fetch('/send-phone-otp', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({phone: phone})
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'ok') {
+            document.getElementById('phoneStep1').style.display = 'none';
+            document.getElementById('phoneStep2').style.display = 'block';
+            document.getElementById('phoneVerifyStatus').innerHTML = '<span style="color:green;">OTP sent! Enter the code you received.</span>';
+        } else {
+            document.getElementById('phoneVerifyStatus').innerHTML = '<span style="color:red;">' + (data.error || 'Failed to send OTP') + '</span>';
+        }
+    })
+    .catch(err => {
+        document.getElementById('phoneVerifyStatus').innerHTML = '<span style="color:red;">Network error. Try again.</span>';
+    });
+}
+
+function verifyPhoneOTP() {
+    let otp = document.getElementById('verifyOTP').value;
+    if (!otp) return;
+    fetch('/verify-phone-otp', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({otp: otp})
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'ok') {
+            document.getElementById('phoneVerifyStatus').innerHTML = '<span style="color:green;">✅ Phone number verified! You will now receive important updates.</span>';
+            document.getElementById('phoneStep2').style.display = 'none';
+            document.getElementById('phoneVerifyCard').style.display = 'none'; // hide card after success
+        } else {
+            document.getElementById('phoneVerifyStatus').innerHTML = '<span style="color:red;">' + (data.error || 'Invalid OTP') + '</span>';
+        }
+    });
+}
+fetch('/api/user')
+    .then(res => res.json())
+    .then(user => {
+        if (!user.phone_verified) {
+            document.getElementById('phoneVerifyCard').style.display = 'block';
+        }
+    });
+// After login, check if phone is already verified (you need an endpoint for that)
+// We'll skip for brevity; you can add a simple /api/user endpoint that returns user details including phone_verified.
 
 function buildPreview() {
     var h = '';
