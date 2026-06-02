@@ -909,13 +909,12 @@ H = '''<!DOCTYPE html>
             <h3>📋 Enter Your 7 Subjects</h3>
             <div id="previewFields"></div>
             <button class="btn btn-calc" onclick="previewCluster()" style="margin-top:10px;">⚡ Check My Cluster Points (Free)</button>
-            <div id="previewResult" style="margin-top:15px;display:none;">
-                <div class="sec-green" style="text-align:center;">
-                    🎯 Estimated Cluster Points: <strong id="estPoints">0.000</strong>
-                </div>
-                <div style="text-align:center;margin-top:15px;">
-                    <button class="btn btn-mpesa" onclick="showPaymentPage()">🔓 Unlock Full Analysis (KES 100)</button>
-                </div>
+<div id="previewResult" style="margin-top:15px;display:none;">
+    <div style="text-align:center;margin-top:15px;">
+        <button class="btn btn-mpesa" onclick="showPaymentPage()">🔓 Unlock Full Analysis (KES 100)</button>
+    </div>
+</div>
+</div>
             </div>
         </div>
         
@@ -1127,33 +1126,57 @@ function buildPreview() {
 }
 
 function previewCluster() {
-    var subjSelects = document.querySelectorAll('.previewSubj');
-    var gradeSelects = document.querySelectorAll('.previewGrade');
+
+    var subjSelects = document.querySelectorAll(".previewSubj");
+
+    var gradeSelects = document.querySelectorAll(".previewGrade");
+
     var grades = {};
+
     for (var i = 0; i < 7; i++) {
+
         if (!subjSelects[i].value || !gradeSelects[i].value) {
-            notify('Please fill all 7 subjects and grades', 'error');
+
+            notify("Please fill all 7 subjects and grades", "error");
+
             return;
+
         }
+
         grades[subjSelects[i].value] = gradeSelects[i].value;
+
     }
+
     previewGrades = grades;
-    
-    fetch('/api/calc', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+
+    fetch("/api/calc", {
+
+        method: "POST",
+
+        headers: {"Content-Type": "application/json"},
+
         body: JSON.stringify({grades: grades})
+
     })
+
     .then(res => res.json())
+
     .then(data => {
+
         if (data.cp !== undefined) {
-            document.getElementById('estPoints').innerText = data.cp.toFixed(3);
-            document.getElementById('previewResult').style.display = 'block';
+
+            document.getElementById("previewResult").style.display = "block";
+
         } else {
-            notify('Error calculating cluster points. Check subjects.', 'error');
+
+            notify("Error calculating cluster points. Check subjects.", "error");
+
         }
+
     })
-    .catch(err => notify('Calculation failed. Try again.', 'error'));
+
+    .catch(err => notify("Calculation failed. Try again.", "error"));
+
 }
 
 function showPaymentPage() {
